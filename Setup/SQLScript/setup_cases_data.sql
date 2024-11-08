@@ -1,4 +1,6 @@
 -- Setup Tables
+-- Create a table to store the cases data
+CREATE TABLE temp_cases(data jsonb);
 \COPY temp_cases (data) FROM '/mslearn-pg-ai/Setup/Data/cases.csv'
 WITH (FORMAT csv, HEADER true);
 

@@ -96,7 +96,7 @@ resource allowlistExtensions 'Microsoft.DBforPostgreSQL/flexibleServers/configur
   properties: {
     source: 'user-override'
     // TO-DO need to add pg_diskann preview for all subscriptions
-    value: 'azure_ai,vector' // Allowlist the Azure AI and vector extensions
+    value: 'azure_ai,vector,age' // Allowlist the Azure AI and vector extensions
   }
 }
 
@@ -126,25 +126,9 @@ resource azureOpenAIEmbeddingDeployment 'Microsoft.CognitiveServices/accounts/de
   }
   properties: {
     model: {
-      name: 'text-embedding-ada-002'
+      name: 'text-embedding-3-small'
       version: '2'
       format: 'OpenAI'
-    }
-  }
-}
-
-@description('Creates an GPT-4 deployment for the Azure OpenAI service.')
-resource azureOpenAIGPTDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-  parent: azureOpenAIService
-  name: 'gpt4o'
-  properties: {
-    model: {
-      name: 'gpt4o'
-      version: '2'
-      format: 'OpenAI'
-    }
-    scaleSettings: {
-      capacity: 1 // Adjust based on your workload
     }
   }
 }
@@ -171,7 +155,6 @@ output databaseName string = casesDatabase.name
 output azureOpenAIServiceName string = azureOpenAIService.name
 output azureOpenAIEndpoint string = azureOpenAIService.properties.endpoint
 output azureOpenAIEmbeddingDeploymentName string = azureOpenAIEmbeddingDeployment.name
-output azureOpenAIGPTDeploymentName string = azureOpenAIGPTDeployment.name
 
 output languageServiceName string = languageService.name
 output languageServiceEndpoint string = languageService.properties.endpoint

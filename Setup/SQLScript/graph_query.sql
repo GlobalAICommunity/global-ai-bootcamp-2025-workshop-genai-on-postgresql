@@ -1,3 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS age CASCADE;
 
 LOAD 'age';
 SET search_path = public, ag_catalog, "$user";
@@ -7,16 +8,15 @@ user_query as (
 	select 'Water leaking into the apartment from the floor above.' as query_text
 ),
 embedding_query AS (
-    SELECT query_text, azure_openai.create_embeddings('text-embedding-3-small', query_text)::vector AS embedding
-    from user_query
+    SELECT azure_openai.create_embeddings('text-embedding-3-small', query_text)::vector AS embedding, query_text
+	FROM user_query
 ),
 vector AS (
-    SELECT cases.id, cases.name AS case_name, cases.decision_date AS date, cases.opinion as opinion, 
-    RANK() OVER (ORDER BY opinions_vector <=> azure_openai.create_embeddings('text-embedding-3-small', query_text)::vector) AS vector_rank,
-	query_text
+    SELECT cases.id, query_text,cases.data
     FROM cases, embedding_query
-    ORDER BY opinions_vector <=> azure_openai.create_embeddings('text-embedding-3-small', query_text)::vector
-    LIMIT 10
+    WHERE (cases.data#>>'{court, id}')::integer IN (9029, 8985) -- Washington Supreme Court (9029) or Washington Court of Appeals (8985)
+    ORDER BY description_vector <=> embedding
+    LIMIT 50
 ),
 json_payload AS (
     SELECT jsonb_build_object(
@@ -24,7 +24,7 @@ json_payload AS (
         jsonb_agg(
             jsonb_build_array(
                 query_text, 
-                LEFT(opinion, 8000)
+                LEFT(data#>>'{casebody, opinions, 0}', 8000)
             )
         )
     ) AS json_pairs
@@ -41,52 +41,22 @@ semantic AS (
              )
          ) WITH ORDINALITY AS elem(relevance)
 ),
-semantic_ranked AS (
-    SELECT RANK() OVER (ORDER BY relevance DESC) AS semantic_rank,
-			semantic.*, vector.*
-    FROM vector
-    JOIN semantic ON vector.vector_rank = semantic.ordinality
-    ORDER BY semantic.relevance DESC
-),
 graph AS (
-	select id, COUNT(ref_id) AS refs
-	from (
-	    SELECT semantic_ranked.id, graph_query.ref_id, c2.opinions_vector <=> embedding AS ref_cosine
-		FROM semantic_ranked, embedding_query
-		LEFT JOIN cypher('case_graph', $$
-	            MATCH (s)-[r:REF]->(n)
-	            RETURN n.case_id AS case_id, s.case_id AS ref_id
-	        $$) as graph_query(case_id TEXT, ref_id TEXT)
-		ON semantic_ranked.id::text = graph_query.case_id
-		LEFT JOIN cases c2
-		ON c2.id::text = graph_query.ref_id
-		WHERE semantic_ranked.semantic_rank <= 25
-		ORDER BY ref_cosine
-		LIMIT 200
-	)
-	group by id
-),
-graph2 as (
-	select semantic_ranked.*, graph.refs 
-	from semantic_ranked
-	left join graph
-	on semantic_ranked.id = graph.id
-),
-graph_ranked AS (
-    SELECT RANK() OVER (ORDER BY COALESCE(graph2.refs, 0) DESC) AS graph_rank, graph2.*
-    FROM graph ORDER BY graph_rank DESC
+    SELECT *, RANK() OVER (ORDER BY graph.refs DESC) AS graph_rank
+    FROM semantic
+	JOIN cypher('case_graph', $$
+            MATCH ()-[r]->(n)
+            RETURN n.case_id, COUNT(r) AS refs
+        $$) as graph_query(case_id TEXT, refs BIGINT)
+	ON semantic.id = graph_query.case_id
 ),
 rrf AS (
-    select
-    	gold_dataset.label,
-        COALESCE(1.0 / (60 + graph_ranked.graph_rank), 0.0) +
-        COALESCE(1.0 / (60 + graph_ranked.semantic_rank), 0.0) AS score,
-        graph_ranked.*
-    FROM graph_ranked
-	left join gold_dataset
-	on id = gold_id
-    ORDER BY score DESC
+    SELECT *,
+        COALESCE(1.0 / (60 + graph_rank), 0.0) +
+        COALESCE(1.0 / (60 + semantic_rank), 0.0) AS score
+    FROM graph
+    LIMIT 20
 )
-select label,score,graph_rank,semantic_rank,vector_rank,id,case_name,"date","data",refs,relevance
+SELECT id, name 
 FROM rrf
-order by score DESC;
+LIMIT 10;
