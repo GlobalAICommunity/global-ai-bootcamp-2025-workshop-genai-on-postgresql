@@ -126,8 +126,9 @@ resource azureOpenAIEmbeddingDeployment 'Microsoft.CognitiveServices/accounts/de
   }
   properties: {
     model: {
+      // Make the quota higher for the deployment
       name: 'text-embedding-3-small'
-      version: '2'
+      version: '1'
       format: 'OpenAI'
     }
   }

@@ -1,6 +1,6 @@
 REGION=eastus
 RG_NAME=rg-learn-postgresql-ai-$REGION
-ADMIN_PASSWORD=Pa$$w0rd
+ADMIN_PASSWORD=passw0rd
 
 az account set --subscription <subscriptionName|subscriptionId>
 az group create --name $RG_NAME --location $REGION

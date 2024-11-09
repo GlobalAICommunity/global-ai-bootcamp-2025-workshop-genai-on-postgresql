@@ -6,7 +6,25 @@ Login to your VM with the following credentials...
 
 **Password: +++@lab.VirtualMachine(Win11-Pro-Base-VM).Password+++**
 
+# Table of Contents
 
+1. [Part 0 - Log into Azure](#part-0---log-into-azure)
+1. [Part 1 - Getting started with AI on Azure PostgreSQL flexible server](#part-1---getting-started-with-ai-on-azure-postgresql-flexible-server)
+    1. [Connect to your database using psql in the Azure Cloud Shell](#connect-to-your-database-using-psql-in-the-azure-cloud-shell)
+    1. [Populate the database with sample data](#populate-the-database-with-sample-data)
+    1. [Install and configure the `azure_ai` extension](#install-and-configure-the-azure_ai-extension)
+    1. [Review the objects contained within the `azure_ai` extension](#review-the-objects-contained-within-the-azure_ai-extension)
+1. [Part 2 - Using AI-driven features in Postgres](#part-2---using-ai-driven-features-in-postgres)
+    1. [Using different approaches to enhance results from your application](#using-different-approaches-to-enhance-results-from-your-application)
+    1. [Using Pattern matching for queries](#using-pattern-matching-for-queries)
+    1. [Using Full Text Search](#using-full-text-search)
+    1. [Using Semantic Search and DiskANN](#using-semantic-search-and-diskann)
+    1. [Hybrid Query](#hybrid-query)
+1. [Optional - Improving Performance with Reranking and Knowledge Graph](#optional---improving-performance-with-reranking-and-knowledge-graph)
+    1. [What is a Reranker](#what-is-a-reranker)
+    1. [Compare Results](#compare-results)
+1. [How RAG chatbot accuracy improves with different technique](#how-rag-chatbot-accuracy-improves-with-different-technique)
+    1. [Exploring Cases RAG application](#exploring-cases-rag-application)
 
 # Part 0 - Log into Azure
 Login to Azure Portal with the following credentials.
@@ -31,7 +49,7 @@ In this task, you connect to the <code spellcheck="false">cases</code> database 
     ![Screenshot of the Azure Database for PostgreSQL Databases page. Databases and Connect for the cases database are highlighted by red boxes.](./instructions276019/postgresql-rentals-database-connect.png)
 4. At the "Password for user pgAdmin" prompt in the Cloud Shell, enter the password for the **pgAdmin** login.
 <br>
-    Password: <code spellcheck="false">Pa$$w0rd</code>
+    Password: <code spellcheck="false">passw0rd</code>
 <br>
     Once logged in, the <code spellcheck="false">psql</code> prompt for the <code spellcheck="false">cases</code> database is displayed.
 5. Throughout the remainder of this exercise, you continue working in the Cloud Shell, so it may be helpful to expand the pane within your browser window by selecting the **Maximize** button at the top right of the pane.
@@ -42,46 +60,20 @@ In this task, you connect to the <code spellcheck="false">cases</code> database 
 
 Before you explore the <code spellcheck="false">azure_ai</code> extension, add a couple of tables to the <code spellcheck="false">cases</code> database and populate them with sample data so you have information to work with as you review the extension's functionality.
 
-1. Run the following commands to create the <code spellcheck="false">cases</code> and <code spellcheck="false">reviews</code> tables for storing us cases law data:
+1. Run the following commands to create the <code spellcheck="false">cases</code> tables for storing us cases law data :
 
     ```sql
-    DROP TABLE IF EXISTS cases;
-    
-    CREATE TABLE cases(
-        id SERIAL PRIMARY KEY,
-        name TEXT,
-        decision_date DATE,
-        court_id INT,
-        opinion TEXT
-    );
+    \i mslearn-pg-ai/Setup/SQLScript/vector_search.sql;
     ```
 
-2. Next, use the <code spellcheck="false">COPY</code> command to load data from CSV files into each table you created above. Start by running the following command to populate the <code spellcheck="false">temp_cases</code> table:
+### Explore Database
+
+1. First we will retrieve a sample of data from the cases table in our cases dataset. This allows us to examine the structure and content of the data stored in the database.
 
     ```sql
-    CREATE TABLE temp_cases(data jsonb);
-    \COPY temp_cases (data) FROM '/mslearn-pg-ai/Setup/Data/cases.csv' WITH (FORMAT csv, HEADER true);
+    SELECT * FROM cases
+    LIMIT 5;
     ```
-
-    the command output should be <code spellcheck="false">COPY 377</code>, indicating that 377 rows were written into the table from the CSV file.
-
-3. Finally, run the command below to load cases data into the <code spellcheck="false">cases</code> table:
-
-    ```sql
-
-
-    INSERT INTO cases
-    SELECT
-        (data#>>'{id}')::int AS id, 
-        (data#>>'{name_abbreviation}')::text AS name, 
-        (data#>>'{decision_date}')::date AS decision_date, 
-        (data#>>'{court,id}')::int AS court_id, 
-        array_to_string(ARRAY(SELECT jsonb_path_query(data, '$.casebody.opinions[*].text')), ', ') AS opinion
-    FROM temp_cases;
-    
-    ```
-
-
 
 ## Install and configure the <code spellcheck="false">azure_ai</code> extension
 
@@ -255,15 +247,6 @@ In this section, we will explore how to leverage AI-driven features within Postg
 
 ## Using different approaches to enhance results from your application.
 
-### Explore Database
-
-1. First we will retrieve a sample of data from the cases table in our cases dataset. This allows us to examine the structure and content of the data stored in the database.
-
-    ```sql
-    SELECT * FROM cases
-    LIMIT 5;
-    ```
-
 ## Using Pattern matching for queries
 
 We will explore how to use the <code spellcheck="false">ILIKE</code> clause in SQL to perform case-insensitive searches within text fields. This is particularly useful when you want to find specific cases or reviews that contain certain keywords.
@@ -311,7 +294,7 @@ You'll get a result similar to this:
 ```
  id | name | opinion 
 ----+------+--------
-4237124  | Pham v. Corbett | "Spearman, C.J.\n¶1 Landlord Lang Pham brought this unlawful detainer action against tenants Shakia Morgan and Shawn Corbett (Tenants)."
+4237124  | Pham v. Corbett | "Spearman, C.J.\n1 Landlord Lang Pham brought this unlawful detainer action against tenants Shakia Morgan and Shawn Corbett (Tenants)."
 (1 rows)
 ```
 
@@ -321,7 +304,7 @@ Improvement from %ILIKE, but not great. As you can see there is only one result 
 
 In this section, we will focus on generating and storing embedding vectors, which are crucial for performing semantic searches in our dataset. Embedding vectors represent data points in a high-dimensional space, allowing for efficient similarity searches and advanced analytics.
 
-### Create and store embedding vectors
+### Create, store and index embedding vectors
 
 Now that we have some sample data, it's time to generate and store the embedding vectors. The <code spellcheck="false">azure_ai</code> extension makes calling the Azure OpenAI embedding API easy.
 
@@ -330,14 +313,14 @@ Now that we have some sample data, it's time to generate and store the embedding
     ```sql
     CREATE EXTENSION IF NOT EXISTS vector;
     ```
-2. Add the embedding vector column.
+1. Add the embedding vector column.
 <br>
     The <code spellcheck="false">text-embedding-ada-002</code> model is configured to return 1,536 dimensions, so use that for the vector column size.
 
     ```sql
     ALTER TABLE cases ADD COLUMN opinions_vector vector(1536);
     ```
-3. Generate an embedding vector for the description of each listing by calling Azure OpenAI through the create_embeddings user-defined function, which is implemented by the azure_ai extension:
+1. Generate an embedding vector for the description of each listing by calling Azure OpenAI through the create_embeddings user-defined function, which is implemented by the azure_ai extension:
 
     ```sql
     UPDATE cases
@@ -352,6 +335,30 @@ Now that we have some sample data, it's time to generate and store the embedding
     ```sql
     \df azure_openai.create_embeddings
     ```
+1. Adding an index to improve vector search speed. 
+
+    Using [DiskANN on Postgres Preview](https://aka.ms/pg-diskann-blogs) - DiskANN is a scalable approximate nearest neighbor search algorithm for efficient vector search at any scale. It offers high recall, high queries per second (QPS), and low query latency, even for billion-point datasets. This makes it a powerful tool for handling large volumes of data. [Learn more about DiskANN from Microsoft](https://aka.ms/pg-diskann-docs). Now, you are ready to install the <code spellcheck="false">pg_diskann</code> extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command.
+
+    ```sql
+    CREATE EXTENSION IF NOT EXISTS pg_diskann;
+    ```
+1. Create the diskann index on a table column that contains vector data.
+
+    ```sql
+    CREATE INDEX cases_cosine_diskann ON cases USING diskann (opinions_vector vector_cosine_ops);
+    ```
+    as you scale your data to millions of rows, DiskANN makes vector search more effcient.
+
+1. Postgres will automatically decide when to use the DiskANN index. However, you can use to following command to force the use of the DiskANN index.
+
+    ```sql
+    SET LOCAL enable_seqscan TO OFF; -- force index usage to use DiskANN.
+    SELECT 
+    id, name
+    FROM cases
+    ORDER BY opinions_vector <=> azure_openai.create_embeddings('text-embedding-3-small', 'Water leaking into the apartment from the floor above.')::vector
+    LIMIT 10;
+
 4. See an example vector by running this query:
 
     ```sql
@@ -473,95 +480,18 @@ gnees, for the cost of replacing a hot tar roof of a leased warehouse and assess
 m.\nOn June 11, 1975,"
 ```
 
-## Improving Performance with DiskANN vector index
+## Optional - Improving Performance with Reranking
 
-DiskANN is a scalable approximate nearest neighbor search algorithm for efficient vector search at any scale. It offers high recall, high queries per second (QPS), and low query latency, even for billion-point datasets. This makes it a powerful tool for handling large volumes of data. [Learn more about DiskANN from Microsoft](https://www.microsoft.com/en-us/research/project/project-akupara-approximate-nearest-neighbor-search-for-large-scale-semantic-search/).
-
-1. Now, you are ready to install the <code spellcheck="false">pg_diskann</code> extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command.
-
-    ```sql
-    CREATE EXTENSION IF NOT EXISTS pg_diskann;
-    ```
-2. Create the diskann index on a table column that contains vector data.
-
-    ```sql
-    CREATE INDEX cases_cosine_diskann ON cases USING diskann (opinions_vector vector_cosine_ops);
-    ```
-3. Postgres will automatically decide when to use the DiskANN index. However, you can use to following command to force the use of the DiskANN index.
-
-    ```sql
-    
-    SET LOCAL enable_seqscan TO OFF; -- force index usage
-    SELECT 
-    id, name
-    FROM cases
-    ORDER BY opinions_vector <=> azure_openai.create_embeddings('text-embedding-3-small', 'Water leaking into the apartment from the floor above.')::vector
-    LIMIT 10;
-    ```
-
-you will get a result like this:
-
-
-```sql
-    id    |                          name                          
-    ---------+--------------------------------------------------------
-    615468 | Le Vette v. Hardman Estate
-    768356 | Uhl Bros. v. Hull
-    8848167 | Wilkening v. Watkins Distributors, Inc.
-    558730 | Burns v. Dufresne
-    594079 | Martindale Clothing Co. v. Spokane & Eastern Trust Co.
-    1086651 | Bach v. Sarich
-    869848 | Tailored Ready Co. v. Fourth & Pike Street Corp.
-    2601920 | Pappas v. Zerwoodis
-    4912975 | Conradi v. Arnold
-    1091260 | Brant v. Market Basket Stores, Inc.
-    (10 rows)
-
-```
-
-
-4. Use the following [EXPLAIN](https://www.postgresql.org/docs/current/sql-explain.html) command to understand how DiskANN works under the hood.
-
-    ```sql
-    
-    SET LOCAL enable_seqscan TO OFF; -- force index usage
-    EXPLAIN SELECT 
-    id, name
-    FROM cases
-    ORDER BY opinions_vector <=> azure_openai.create_embeddings('text-embedding-3-small', 'Water leaking into the apartment from the floor above.')::vector
-    LIMIT 10;
-    ```
-
-you will get a result like this:
-
-```sql
--[ RECORD 1 ]---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-QUERY PLAN | Limit  (cost=479.20..484.14 rows=10 width=261) (actual time=1.207..1.270 rows=10 loops=1)
--[ RECORD 2 ]---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-QUERY PLAN |   ->  Index Scan using listing_cosine_diskann on cases_diskann  (cost=479.20..1574.91 rows=2217 width=261) (actual time=1.206..1.268 rows=10 loops=1)
--[ RECORD 3 ]---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-QUERY PLAN |         Order By: (description_vector <=> '[-0.016351668,-0.052834343,0.049271334,0.07909881,-0.028962178,...,-0.0071769194,0.004959582]'::vector)
--[ RECORD 4 ]---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-QUERY PLAN | Planning Time: 70.183 ms
--[ RECORD 5 ]---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-QUERY PLAN | Execution Time: 1.298 ms
-```
-
-as you scale your data to millions of rows, DiskANN makes vector search more effcient.
-
-## Optional: Improving Performance with Reranking and Knowledge Graph
-
-## What is a Reranker
-In this section, we will explore the concept of hybrid search, which combines both full-text search and semantic search capabilities. This approach enhances the search experience by leveraging the strengths of both methods, allowing for more accurate and relevant results.
+### What is a Reranker
+A reranker is a system or algorithm used to improve the relevance of search results. It takes an initial set of results generated by a primary search algorithm and reorders them based on additional criteria or more sophisticated models. The goal of reranking is to enhance the quality and relevance of the results presented to the user, often by leveraging machine learning models that consider various factors such as user behavior, contextual information, and advanced relevance scoring techniques.
 
 ### Using a Reranker
 
-1. 
+1. Execute the reranker query to improve the relevance of your search results.
 
-2. Important snippent of code to understand
+2. Important snippet of code to understand for reranking
 ```sql
-semantic AS (
-    SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
+SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
     FROM json_payload,
          LATERAL jsonb_array_elements(
              azure_ml.invoke(
@@ -570,20 +500,24 @@ semantic AS (
                  timeout_ms => 180000
              )
          ) WITH ORDINALITY AS elem(relevance)
-),
+)
 ```
 
-We have already create the file for your.. just run.
+3. This SQL snippet performs the following actions:
+    - Invokes the Azure Machine Learning service with the specified deployment name and timeout. [BGE model](https://huggingface.co/BAAI/bge-m3) is being used for reranker.
+    - Processes the JSON payload and extracts the relevance score and ordinality for each element to improve the relevance of search results.
+    - The relevance is used for reranking the results.
+
+4. We have created a file for you to test reranking.
 ```sql
 \i mslearn-pg-ai/Setup/SQLScript/reranker_query.sql
 ```
 
 you will get a result like this:
 
-
 ```sql
    id    |                       case_name                        
----------+--------------------------------------------------------
+---------+-------------------------------------------------------
   768356 | Uhl Bros. v. Hull
   615468 | Le Vette v. Hardman Estate
  4912975 | Conradi v. Arnold
@@ -596,50 +530,26 @@ you will get a result like this:
   558730 | Burns v. Dufresne
 
 ```
-## Using Graph Data in Postgres
-
-### Using Graph to improve results accuracy
-
-1. Just show the slides and result..
-
-2. Important snippent of code to understand
-```sql
-graph AS (
-	select id, COUNT(ref_id) AS refs
-	from (
-	    SELECT semantic_ranked.id, graph_query.ref_id, c2.opinions_vector <=> embedding AS ref_cosine
-		FROM semantic_ranked, embedding_query
-		LEFT JOIN cypher('case_graph', $$
-	            MATCH (s)-[r:REF]->(n)
-	            RETURN n.case_id AS case_id, s.case_id AS ref_id
-	        $$) as graph_query(case_id TEXT, ref_id TEXT)
-		ON semantic_ranked.id::text = graph_query.case_id
-		LEFT JOIN cases c2
-		ON c2.id::text = graph_query.ref_id
-		WHERE semantic_ranked.semantic_rank <= 25
-		ORDER BY ref_cosine
-		LIMIT 200
-	)
-	group by id
-)
-```
-
-We have already create the file for your.. just run.
-```sql
-\i mslearn-pg-ai/Setup/SQLScript/graph_query.sql
-```
 
 ## Compare Results
 
-`\i mslearn-pg-ai/Setup/SQLScript/vector_search.sql;`
+1. Execute the following SQL scripts to perform the vector search and reranker query:
 
-`\i mslearn-pg-ai/Setup/SQLScript/reranker_query.sql;`
+    ```sql
+    \i mslearn-pg-ai/Setup/SQLScript/vector_search.sql;
+    ```
 
-`\i mslearn-pg-ai/Setup/SQLScript/graph_query.sql;`
+    ```sql
+    \i mslearn-pg-ai/Setup/SQLScript/reranker_query.sql;
+    ```
+    
+2. After running the scripts, compare the results of the vector search and the reranker query.
 
-Inspect with you think is better.
+3. Consider the following aspects while comparing the results:
+    - Accuracy: Which query returns more relevant results?
+    - Performance: Which query executes faster?
 
-We think Graph..
+4. Read the opinions from both results top 10 and decide with is better based on the above criteria. The reranked results should have better results.
 
 # How RAG chatbot accuracy improves with different technique
 
@@ -649,7 +559,8 @@ The Retrieval-Augmented Generation (RAG) system is a sophisticated architecture 
 
 - App UX (web app) for the user experience
 - App server or orchestrator (integration and coordination layer)
-- Azure PostgreSQL Flexible Server - [pgvector extension](https://github.com/pgvector/pgvector) (information retrieval system)
+- Azure PostgreSQL Flexible Server 
+- [pgvector extension](https://github.com/pgvector/pgvector) (information retrieval system)
 - Azure OpenAI (LLM for generative AI)
 
 ![Screenshot about RAG](./instructions276019/azure-rag.png)
@@ -659,19 +570,27 @@ We create a sample cases RAG application so you can explore with RAG application
 
 1. Go to our sample [RAG application](https://pg-rag-demo.azurewebsites.net/)
 
-1. Enter your Azure OpenAI credentials in the sample app, to chat with the data.
+1. The Azure OpenAI credentials are already in the sample app, to chat with the data.
 ![OpenAI credientials](./instructions276019/azure-open-ai-creds.png)
 
-1.  To find your credentials, navigate to your **<code spellcheck="false">Azure OpenAI</code>** resource in the [Azure portal](https://portal.azure.com/).
-<br>
 
-1. Once you are on the Azure OpenAI resource page, in the resource menu, under the **Resource Management** section, select **Keys and Endpoint**, then copy your endpoint and one of the available keys.
-<br>
-    ![Screenshot of the Azure OpenAI service's Keys and Endpoints page is displayed, with the KEY 1 and Endpoint copy buttons highlighted by red boxes.](./instructions276019/azure-openai-keys-and-endpoints.png)
-<br>
-
-    You can use either <code spellcheck="false">KEY 1</code> or <code spellcheck="false">KEY 2</code>. Always having two keys allows you to securely rotate and regenerate keys without causing service disruption.
-
-1. Go back to the [RAG application](https://pg-rag-demo.azurewebsites.net/) and explore the RAG application.
+1. Go back to the [RAG application](https://pg-rag-demo.azurewebsites.net/) and explore the RAG application. Try any query to test the limits of the application
 
     ![RAG Final Results](./instructions276019/rag-final-results.png)
+
+**Suggestions for queries:**
+1. `Water leaking into the apartment from the floor above.`
+
+## Compare Results of RAG responses using Vector search or Reranker
+
+1. In [RAG application](https://pg-rag-demo.azurewebsites.net/) upload the JSON file with results from vector search `\path\to\file`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
+
+1. Try with reranker results. Upload the JSON file with results from vector search `\path\to\file`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
+
+1. After running the scripts, compare the results of the vector search and the reranker query.
+
+1. Consider the following aspects while comparing the results:
+    - Accuracy: Which query returns more relevant results?
+    - Understandability: Which response is easier to comprehend and more user-friendly?
+
+1. We believe as your implement more advanced tehcniques you get better accuracy for certain scenarios. 

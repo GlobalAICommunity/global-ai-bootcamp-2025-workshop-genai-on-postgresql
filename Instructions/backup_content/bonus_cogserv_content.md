@@ -119,3 +119,38 @@ The <code spellcheck="false">azure_ml</code> schema lets functions connect to Az
     the <code spellcheck="false">inference()</code> function uses a trained machine learning model to predict or generate outputs based on new, unseen data.
 <br>
     By providing an endpoint and key, you can connect to an Azure ML deployed endpoint like you connected to your Azure OpenAI and Azure AI Services endpoints. Interacting with Azure ML requires having a trained and deployed model, so it is out of scope for this exercise, and you are not setting up that connection to try it out here.
+
+
+
+    ## Using Graph Data in Postgres
+
+### Using Graph to improve results accuracy
+
+1. Just show the slides and result..
+
+2. Important snippent of code to understand
+```sql
+graph AS (
+	select id, COUNT(ref_id) AS refs
+	from (
+	    SELECT semantic_ranked.id, graph_query.ref_id, c2.opinions_vector <=> embedding AS ref_cosine
+		FROM semantic_ranked, embedding_query
+		LEFT JOIN cypher('case_graph', $$
+	            MATCH (s)-[r:REF]->(n)
+	            RETURN n.case_id AS case_id, s.case_id AS ref_id
+	        $$) as graph_query(case_id TEXT, ref_id TEXT)
+		ON semantic_ranked.id::text = graph_query.case_id
+		LEFT JOIN cases c2
+		ON c2.id::text = graph_query.ref_id
+		WHERE semantic_ranked.semantic_rank <= 25
+		ORDER BY ref_cosine
+		LIMIT 200
+	)
+	group by id
+)
+```
+
+We have already create the file for your.. just run.
+```sql
+\i mslearn-pg-ai/Setup/SQLScript/graph_query.sql
+```

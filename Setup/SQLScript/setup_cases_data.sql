@@ -21,6 +21,7 @@ SELECT
     (data#>>'{name_abbreviation}')::text AS name, 
     (data#>>'{decision_date}')::date AS decision_date, 
     (data#>>'{court,id}')::int AS court_id, 
+    (data#>>'{cites_to,case_ids}')::int AS related_case_ids, 
     array_to_string(ARRAY(SELECT jsonb_path_query(data, '$.casebody.opinions[*].text')), ', ') AS opinion
 FROM temp_cases;
 
