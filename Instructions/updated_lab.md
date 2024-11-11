@@ -558,6 +558,13 @@ graph AS (
     - The join condition matches the `id` from `semantic_ranked` with the `case_id` from the Cypher query result, casting `case_id` to an integer.
 
 
+1. Before running the Graph query it `age` needs to be added as a share library for Postgres.
+
+1. Go back to the Postgres in the Azure Portal. In the resource menu, under **Settings**, select **Databases** select **Connect** for the <code spellcheck="false">cases</code> database.
+<br>
+    ![Screenshot of the Azure Database for PostgreSQL Databases page. erver parameters for AGE.](./instructions276019/postgresql-age-shared-lib.png)
+
+
 1. We have created a file for you to test graph queries.
 
 ```sql
@@ -629,7 +636,7 @@ We create a sample cases RAG application so you can explore with RAG application
 1. Go to our sample [RAG application](https://pg-rag-demo.azurewebsites.net/)
 
 1. The Azure OpenAI credentials are already in the sample app, to chat with the data.
-![OpenAI credientials](./instructions276019/azure-open-ai-creds.png)
+![OpenAI credientials](./instructions276019/azure-RAG-app.png)
 
 
 1. Go back to the [RAG application](https://pg-rag-demo.azurewebsites.net/) and explore the RAG application. Try any query to test the limits of the application

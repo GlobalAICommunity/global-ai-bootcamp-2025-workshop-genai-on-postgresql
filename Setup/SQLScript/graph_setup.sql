@@ -1,7 +1,7 @@
 -- Create a temp table to store the cases data
-DROP TABLE IF EXISTS temp_cases;
-CREATE TABLE temp_cases(data jsonb);
-\COPY temp_cases (data) FROM 'mslearn-pg-ai/Setup/Data/cases.csv' WITH (FORMAT csv, HEADER true);
+DROP TABLE IF EXISTS public.temp_cases;
+CREATE TABLE public.temp_cases(data jsonb);
+\COPY public.temp_cases (data) FROM 'mslearn-pg-ai/Setup/Data/cases.csv' WITH (FORMAT csv, HEADER true);
 
 CREATE OR REPLACE FUNCTION create_case_in_case_graph(case_id text)
 RETURNS void
@@ -9,7 +9,7 @@ LANGUAGE plpgsql
 VOLATILE
 AS $BODY$
 BEGIN
-	load 'age';
+
 	SET search_path TO ag_catalog;
 	EXECUTE format('SELECT * FROM cypher(''case_graph'', $$CREATE (:case {case_id: %s})$$) AS (a agtype);', quote_ident(case_id));
 END
@@ -21,7 +21,7 @@ LANGUAGE plpgsql
 VOLATILE
 AS $BODY$
 BEGIN
-	load 'age';
+
 	SET search_path TO ag_catalog;
 	EXECUTE format('SELECT * FROM cypher(''case_graph'', $$MATCH (a:case), (b:case) WHERE a.case_id = %s AND b.case_id = %s CREATE (a)-[e:REF]->(b) RETURN e$$) AS (a agtype);', quote_ident(id_from), quote_ident(id_to));
 END
@@ -35,7 +35,7 @@ LANGUAGE plpgsql
 VOLATILE
 AS $BODY$
 BEGIN
-	load 'age';
+
 	SET search_path TO ag_catalog;
 	EXECUTE format('SELECT * FROM cypher(''case_graph_full'', $$CREATE (:case {case_id: %s})$$) AS (a agtype);', quote_ident(case_id));
 END
@@ -47,7 +47,7 @@ LANGUAGE plpgsql
 VOLATILE
 AS $BODY$
 BEGIN
-	load 'age';
+
 	SET search_path TO ag_catalog;
 	EXECUTE format('SELECT * FROM cypher(''case_graph_full'', $$MATCH (a:case), (b:case) WHERE a.case_id = %s AND b.case_id = %s CREATE (a)-[e:REF]->(b) RETURN e$$) AS (a agtype);', quote_ident(id_from), quote_ident(id_to));
 END
@@ -57,14 +57,14 @@ $BODY$;
 CREATE EXTENSION IF NOT EXISTS age CASCADE;
 
 SELECT * FROM ag_catalog.drop_graph('case_graph', true);
-LOAD 'age';
+
 SET search_path = public, ag_catalog, "$user";
 
 SELECT create_graph('case_graph');
 
 -- Create nodes (doesn't work in dbeaver, but works in pgadmin)
-SELECT create_case_in_case_graph((temp_cases.data#>>'{id}')::text) 
-FROM temp_cases;
+SELECT create_case_in_case_graph((public.temp_cases.data#>>'{id}')::text) 
+FROM public.temp_cases;
 
 SELECT * from cypher('case_graph', $$
                     MATCH (n)
@@ -73,12 +73,12 @@ SELECT * from cypher('case_graph', $$
 
 WITH edges AS (
 	SELECT c1.data#>>'{id}' AS id_from, c2.data#>>'{id}' AS id_to
-	FROM temp_cases c1
+	FROM public.temp_cases c1
 	LEFT JOIN 
 	    LATERAL jsonb_array_elements(c1.data -> 'cites_to') AS cites_to_element ON true
 	LEFT JOIN 
 	    LATERAL jsonb_array_elements(cites_to_element -> 'case_ids') AS case_ids ON true
-	JOIN temp_cases c2 
+	JOIN public.temp_cases c2 
 		ON case_ids::text = c2.data#>>'{id}'
 )
 SELECT public.create_case_link_in_case_graph(edges.id_from::text, edges.id_to::text) 
@@ -87,12 +87,12 @@ limit 1;
 
 WITH edges AS (
 	SELECT DISTINCT c1.data#>>'{id}' AS id_from, c2.data#>>'{id}' AS id_to
-	FROM temp_cases c1
+	FROM public.temp_cases c1
 	LEFT JOIN 
 	    LATERAL jsonb_array_elements(c1.data -> 'cites_to') AS cites_to_element ON true
 	LEFT JOIN 
 	    LATERAL jsonb_array_elements(cites_to_element -> 'case_ids') AS case_ids ON true
-	JOIN temp_cases c2 
+	JOIN public.temp_cases c2 
 		ON case_ids::text = c2.data#>>'{id}'
 ), gedges AS (
 	SELECT edges.id_from, node1.id AS gid_from, edges.id_to, node2.id AS gid_to
