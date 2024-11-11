@@ -122,7 +122,7 @@ resource azureOpenAIEmbeddingDeployment 'Microsoft.CognitiveServices/accounts/de
   parent: azureOpenAIService
   sku: {
     name: 'Standard'
-    capacity: 30
+    capacity: 350
   }
   properties: {
     model: {

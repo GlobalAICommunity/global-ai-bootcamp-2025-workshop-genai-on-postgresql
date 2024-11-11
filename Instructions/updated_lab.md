@@ -20,9 +20,9 @@ Login to your VM with the following credentials...
     1. [Using Full Text Search](#using-full-text-search)
     1. [Using Semantic Search and DiskANN](#using-semantic-search-and-diskann)
     1. [Hybrid Query](#hybrid-query)
-1. [Optional - Improving Performance with Reranking and Knowledge Graph](#optional---improving-performance-with-reranking-and-knowledge-graph)
+1. [Optional - Improving Performance with Reranking and GraphRAG](#optional---improving-performance-with-reranking-and-knowledge-graph)
     1. [What is a Reranker](#what-is-a-reranker)
-    1. [What is a Knowledge Graph](#what-is-a-knowledge-graph)
+    1. [What is a GraphRAG](#what-is-a-knowledge-graph)
     1. [Compare Results](#compare-results)
 1. [How RAG chatbot accuracy improves with different technique](#how-rag-chatbot-accuracy-improves-with-different-technique)
     1. [Exploring Cases RAG application](#exploring-cases-rag-application)
@@ -64,7 +64,7 @@ Before you explore the <code spellcheck="false">azure_ai</code> extension, add a
 1. Run the following commands to create the <code spellcheck="false">cases</code> tables for storing us cases law data :
 
     ```sql
-    \i mslearn-pg-ai/Setup/SQLScript/vector_search.sql;
+    \i mslearn-pg-ai/Setup/SQLScript/initialize_dataset.sql;
     ```
 
 ### Explore Database
@@ -316,12 +316,12 @@ Now that we have some sample data, it's time to generate and store the embedding
     ```
 1. Add the embedding vector column.
 <br>
-    The <code spellcheck="false">text-embedding-ada-002</code> model is configured to return 1,536 dimensions, so use that for the vector column size.
+    The <code spellcheck="false">text-embedding-3-small</code> model is configured to return 1,536 dimensions, so use that for the vector column size.
 
     ```sql
     ALTER TABLE cases ADD COLUMN opinions_vector vector(1536);
     ```
-1. Generate an embedding vector for the description of each listing by calling Azure OpenAI through the create_embeddings user-defined function, which is implemented by the azure_ai extension:
+1. Generate an embedding vector for the opinion of each case by calling Azure OpenAI through the create_embeddings user-defined function, which is implemented by the azure_ai extension:
 
     ```sql
     UPDATE cases
@@ -336,9 +336,9 @@ Now that we have some sample data, it's time to generate and store the embedding
     ```sql
     \df azure_openai.create_embeddings
     ```
-1. Adding an index to improve vector search speed. 
+1. Adding an [DiskANN Vector Index](https://aka.ms/pg-diskann-docs) to improve vector search speed. 
 
-    Using [DiskANN on Postgres Preview](https://aka.ms/pg-diskann-blogs) - DiskANN is a scalable approximate nearest neighbor search algorithm for efficient vector search at any scale. It offers high recall, high queries per second (QPS), and low query latency, even for billion-point datasets. This makes it a powerful tool for handling large volumes of data. [Learn more about DiskANN from Microsoft](https://aka.ms/pg-diskann-docs). Now, you are ready to install the <code spellcheck="false">pg_diskann</code> extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command.
+    Using [DiskANN Vector Index in Azure Database for PostgreSQL](https://aka.ms/pg-diskann-blog) - DiskANN is a scalable approximate nearest neighbor search algorithm for efficient vector search at any scale. It offers high recall, high queries per second (QPS), and low query latency, even for billion-point datasets. This makes it a powerful tool for handling large volumes of data. [Learn more about DiskANN from Microsoft](https://aka.ms/pg-diskann-docs). Now, you are ready to install the <code spellcheck="false">pg_diskann</code> extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command.
 
     ```sql
     CREATE EXTENSION IF NOT EXISTS pg_diskann;
@@ -359,6 +359,7 @@ Now that we have some sample data, it's time to generate and store the embedding
     FROM cases
     ORDER BY opinions_vector <=> azure_openai.create_embeddings('text-embedding-3-small', 'Water leaking into the apartment from the floor above.')::vector
     LIMIT 10;
+    ```
 
 4. See an example vector by running this query:
 
@@ -375,7 +376,7 @@ Now that we have some sample data, it's time to generate and store the embedding
 
 ### Perform a semantic search query
 
-Now that you have listing data augmented with embedding vectors, it's time to run a semantic search query. To do so, get the query string embedding vector, then perform a cosine search to find the cases whose descriptions are most semantically similar to the query.
+Now that you have listing data augmented with embedding vectors, it's time to run a semantic search query. To do so, get the query string embedding vector, then perform a cosine search to find the cases whose opinions that are most semantically similar to the query.
 
 1. Generate the embedding for the query string.
 
@@ -418,7 +419,7 @@ You'll get a result similar to this. Results may vary, as embedding vectors are 
     (10 rows)
 
 ```
-3. You may also project the <code spellcheck="false">description</code> column to be able to read the text of the matching rows whose descriptions were semantically similar. For example, this query returns the best match:
+3. You may also project the <code spellcheck="false">cases</code> column to be able to read the text of the matching rows whose opinions were semantically similar. For example, this query returns the best match:
 
     ```sql
     SELECT 
@@ -436,7 +437,7 @@ which prints something like:
     615468       | "Morris, J.\nAppeal from an order of nonsuit and dismissal, in an action brought by a tenant to recover damages for injuries to her goods, caused by leakage of water from an upper story. The facts, so far as they are pertinent to our inquiry, are about these: The Hardman Estate is the owner of a building on Yesler Way, in Seattle, the lower portion of which is divided into storerooms, and the upper is used as a hotel. Appellant, who was engaged in the millinery business, occupied one of the storerooms under a written lease...."
     ```
 
-To intuitively understand semantic search, observe that the description mentioned downtown, but doesn't actually contain the terms `"Water leaking into the apartment from the floor above."`. However it does highlight a document with a section that says `"nonsuit and dismissal, in an action brought by a tenant to recover damages for injuries to her goods, caused by leakage of water from an upper story"`
+To intuitively understand semantic search, observe that the opinion mentioned doesn't actually contain the terms `"Water leaking into the apartment from the floor above."`. However it does highlight a document with a section that says `"nonsuit and dismissal, in an action brought by a tenant to recover damages for injuries to her goods, caused by leakage of water from an upper story"`
 
 ### Difference between <code spellcheck="false">tsvector</code> vs <code spellcheck="false">pgvector</code>
 
@@ -481,17 +482,15 @@ gnees, for the cost of replacing a hot tar roof of a leased warehouse and assess
 m.\nOn June 11, 1975,"
 ```
 
-## Optional - Improving Performance with Reranking and Knowledge Graph
+## Optional - Improving Performance with Reranking and GraphRAG
 
 ### What is a Reranker
 A reranker is a system or algorithm used to improve the relevance of search results. It takes an initial set of results generated by a primary search algorithm and reorders them based on additional criteria or more sophisticated models. The goal of reranking is to enhance the quality and relevance of the results presented to the user, often by leveraging machine learning models that consider various factors such as user behavior, contextual information, and advanced relevance scoring techniques.
 
 ### Using a Reranker
 
-1. Execute the reranker query to improve the relevance of your search results.
-
-2. Important snippet of code to understand for reranking
-```sql
+1. Before we execute the reranker query to improve the relevance of your search results. We should understand the following important snippet of code for reranking
+```
 SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
     FROM json_payload,
          LATERAL jsonb_array_elements(
@@ -504,12 +503,12 @@ SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
 )
 ```
 
-3. This SQL snippet performs the following actions:
-    - Invokes the Azure Machine Learning service with the specified deployment name and timeout. [BGE model](https://huggingface.co/BAAI/bge-m3) is being used for reranker.
-    - Processes the JSON payload and extracts the relevance score and ordinality for each element to improve the relevance of search results.
-    - The relevance is used for reranking the results.
+1. This SQL snippet performs the following actions:
+    - `azure_ml.invoke()` - Invokes the Azure Machine Learning service with the specified deployment name and timeout. [BGE model](https://huggingface.co/BAAI/bge-m3) is being used for reranker.
+    - `jsonb_array_elements()` - Processes the JSON payload and extracts the relevance score and ordinality for each element to improve the relevance of search results.
+    - `elem.relevance` - The relevance is used for reranking the results.
 
-4. We have created a file for you to test reranking.
+1. We have created a file for you to test reranking.
 ```sql
 \i mslearn-pg-ai/Setup/SQLScript/reranker_query.sql
 ```
@@ -532,14 +531,14 @@ you will get a result like this:
 
 ```
 
-### What is a Knowledge Graph
-A Knowledge Graph is a structured representation of information that captures relationships between entities in a graph format. It is used to integrate, manage, and query data from diverse sources, providing a unified view of interconnected data. [Apache Graph Extension](https://age.apache.org/age-manual/master/index.html) (AGE) is a PostgreSQL extension developed under the Apache Incubator project. AGE is designed to provide graph database functionality, enabling users to store and query graph data efficiently within PostgreSQL. 
+### What is GraphRAG
+GraphRAG uses knowledge graphs to provide substantial improvements in question-and-answer performance when reasoning about complex information. A Knowledge Graph is a structured representation of information that captures relationships between entities in a graph format. It is used to integrate, manage, and query data from diverse sources, providing a unified view of interconnected data. [Apache Graph Extension](https://age.apache.org/age-manual/master/index.html) (AGE) is a PostgreSQL extension developed under the Apache Incubator project. AGE is designed to provide graph database functionality, enabling users to store and query graph data efficiently within PostgreSQL. 
 
-### Using a Knowledge Graph
+### Using a GraphRAG
 
-1. Execute the reranker query to improve the relevance of your search results.
+1. Before we execute the graph query to improve the relevance of your search results. We should understand the following important snippet of code for reranking
 
-2. Important snippet of code to understand for graph queries with cypher.
+1. Important snippet of code to understand for graph queries with cypher.
 ```sql
 graph AS (
     SELECT graph_query.refs, semantic_ranked.vector_rank, semantic_ranked.*, graph_query.case_id from semantic_ranked
@@ -551,7 +550,7 @@ graph AS (
 )
 ```
 
-3. This SQL snippet performs the following actions:
+1. This SQL snippet performs the following actions:
     - Selects the `refs` (reference count) and `case_id` from the `graph` (create with [Apache Age extension](https://techcommunity.microsoft.com/blog/adforpostgresql/introducing-support-for-graph-data-in-azure-database-for-postgresql-preview/4275628)).
     - Selects all columns from the `semantic_ranked` table.
     - Performs a `LEFT JOIN` between `semantic_ranked` and the result of a Cypher query executed on the case_graph graph.
@@ -559,7 +558,7 @@ graph AS (
     - The join condition matches the `id` from `semantic_ranked` with the `case_id` from the Cypher query result, casting `case_id` to an integer.
 
 
-4. We have created a file for you to test graph queries.
+1. We have created a file for you to test graph queries.
 
 ```sql
     \i mslearn-pg-ai/Setup/SQLScript/graph_setup.sql;
@@ -613,6 +612,7 @@ you will get a result like this:
 
 We will explore how to effectively utilize context within your Retrieval-Augmented Generation (RAG) chatbot. Context is crucial for enhancing the chatbot’s ability to provide relevant and accurate responses, making interactions more meaningful for users.
 
+## What is RAG
 The Retrieval-Augmented Generation (RAG) system is a sophisticated architecture designed to enhance user interactions through a seamless integration of various technological components. At its core, RAG is composed of:
 
 - App UX (web app) for the user experience
@@ -639,11 +639,11 @@ We create a sample cases RAG application so you can explore with RAG application
 
 ## Compare Results of RAG responses using Vector search, Reranker or GraphRAG
 
-1. In [RAG application](https://pg-rag-demo.azurewebsites.net/) upload the JSON file with results from vector search `\path\to\file`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
+1. In [RAG application](https://pg-rag-demo.azurewebsites.net/) upload the JSON file with results from vector search `\Downloads`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
 
-1. Try with reranker results. Upload the JSON file with results from reranker `\path\to\file`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
+1. Try with reranker results. Upload the JSON file with results from reranker `\Downloads`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
 
-1. Try with a knowledge graph results. Upload the JSON file with results from graph query `\path\to\file`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
+1. Try with a graph results. Upload the JSON file with results from graph query `\Downloads`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
 
 1. After running the scripts, compare the results of the vector search and the reranker query.
 

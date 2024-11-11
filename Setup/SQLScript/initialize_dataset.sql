@@ -14,7 +14,7 @@ CREATE TABLE cases(
 
 -- Create a temp table to store the cases data
 CREATE TABLE temp_cases(data jsonb);
-\COPY temp_cases (data) FROM '/mslearn-pg-ai/Setup/Data/cases.csv' WITH (FORMAT csv, HEADER true);
+\COPY temp_cases (data) FROM 'mslearn-pg-ai/Setup/Data/cases.csv' WITH (FORMAT csv, HEADER true);
 
 -- Insert data into the cases table
 INSERT INTO cases
