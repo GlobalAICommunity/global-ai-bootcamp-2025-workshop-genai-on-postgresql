@@ -1,1 +1,5 @@
-Instructions/rag_app/.lab
+App/.lab
+App/.diskann
+App/.env
+App/.ignite_lab
+.ignite_lab

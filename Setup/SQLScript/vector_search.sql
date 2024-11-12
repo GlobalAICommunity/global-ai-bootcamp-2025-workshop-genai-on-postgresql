@@ -3,6 +3,7 @@ WITH embedding AS (
     SELECT 
         id, 
         name,
+        opinion,
         opinions_vector,
         RANK() OVER (
             ORDER BY opinions_vector <=> azure_openai.create_embeddings(
@@ -12,7 +13,7 @@ WITH embedding AS (
         ) AS vector_rank
     FROM cases
 )
-SELECT id, name
+SELECT id, name,opinion
 FROM embedding
 ORDER BY vector_rank
 LIMIT 10;

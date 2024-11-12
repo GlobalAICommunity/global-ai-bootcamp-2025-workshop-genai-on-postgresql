@@ -81,6 +81,6 @@ rrf AS (
     ORDER BY score DESC
     LIMIT 20
 )
-SELECT id, case_name
+SELECT id, case_name, opinion
 FROM rrf
 LIMIT 10;

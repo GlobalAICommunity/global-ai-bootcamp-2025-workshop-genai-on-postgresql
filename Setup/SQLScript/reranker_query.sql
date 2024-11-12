@@ -50,5 +50,6 @@ semantic_ranked AS (
     ORDER BY semantic.relevance DESC
 )
 
-select id, case_name
-FROM semantic_ranked;
+select id, case_name, opinion
+FROM semantic_ranked
+LIMIT 10;
