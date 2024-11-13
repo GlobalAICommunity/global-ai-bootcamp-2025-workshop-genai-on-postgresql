@@ -11,6 +11,12 @@ endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_key = os.getenv("AZURE_OPENAI_API_KEY")
 deployment = os.getenv("DEPLOYMENT_NAME", "gpt-4o")
 
+# UI elements
+def render_cta_link(url, label, font_awesome_icon):
+    st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">', unsafe_allow_html=True)
+    button_code = f'''<a href="{url}" target=_blank><i class="fa {font_awesome_icon}"></i> {label}</a>'''
+    return st.markdown(button_code, unsafe_allow_html=True)
+    
 def enable_sidebar():
     # Sidebar for API key and connection settingsc
     with st.sidebar:
@@ -34,6 +40,10 @@ def enable_sidebar():
             except Exception as e:
                 st.error(f"Failed to connect to Azure OpenAI: {e}")
 
+        render_cta_link(url="#", label="Docs", font_awesome_icon="fa-book")
+        render_cta_link(url="#", label="Blog", font_awesome_icon="fa-windows")
+        render_cta_link(url="https://aka.ms/pg-ai-ignite-lab", label="GitHub", font_awesome_icon="fa-github")
+
 # Streamlit configuration
 st.set_page_config(page_title="RAG Chatbot with PostgreSQL", page_icon="⚖️", layout="wide")
 
@@ -56,7 +66,7 @@ st.write(
 # Header for the application
 st.title("RAG Chatbot Demo with PostgreSQL")
 
-#enable_sidebar()
+enable_sidebar()
 client = AzureOpenAI(
                     azure_endpoint=endpoint,
                     api_key=api_key,
@@ -71,7 +81,8 @@ else:
     client = None
 
 # File uploader for loading initial query results
-st.subheader("Step 1: Load Initial Query Results")
+st.subheader("Step 1: Load Initial Search Results")
+st.write("Find examples files in the `/Setup/Data/` directory. In this folder [here](https://github.com/Azure-Samples/mslearn-pg-ai/tree/main/Setup/Data)")
 uploaded_file = st.file_uploader("Upload a CSV file with initial query results", type="csv")
 
 # Global variable to store initial context

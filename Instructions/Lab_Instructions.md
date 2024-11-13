@@ -20,12 +20,12 @@ Login to your VM with the following credentials...
     1. [Using Full Text Search](#using-full-text-search)
     1. [Using Semantic Search and DiskANN](#using-semantic-search-and-diskann)
     1. [Hybrid Query](#hybrid-query)
+1. [How RAG chatbot accuracy improves with different technique](#how-rag-chatbot-accuracy-improves-with-different-technique)
+    1. [Exploring Cases RAG application](#exploring-cases-rag-application)
 1. [Optional - Improving Performance with Reranking and GraphRAG](#optional---improving-performance-with-reranking-and-knowledge-graph)
     1. [What is a Reranker](#what-is-a-reranker)
     1. [What is a GraphRAG](#what-is-a-knowledge-graph)
     1. [Compare Results](#compare-results)
-1. [How RAG chatbot accuracy improves with different technique](#how-rag-chatbot-accuracy-improves-with-different-technique)
-    1. [Exploring Cases RAG application](#exploring-cases-rag-application)
 
 # Part 0 - Log into Azure
 Login to Azure Portal with the following credentials.
@@ -253,7 +253,7 @@ Now you have explored the database in Azure and configured the Azure OpenAI endp
 Using pgAdmin makes it easier to explore the output and understand how the AI features work in PostgreSQL.
 
 1. Setup server connections. Follow instructions in Azure Portal from Connect.
-![Connecting to pgAdmin from Azure](/Instructions/instructions276019/12-portal-toolbar-cloud-shell.png)
+![Connecting to pgAdmin from Azure](/Instructions/instructions276019/pgAdmin-from-azure.png)
 
     1. **Open pgAdmin 4:** Launch the pgAdmin 4 application on your computer. This should be on your desktop.
 
@@ -271,7 +271,7 @@ Using pgAdmin makes it easier to explore the output and understand how the AI fe
 
     1. Open the query tool, to start working with queires in this section.
 
-    ![pgAdmin Query tool usage](./instructions276019/12-portal-toolbar-cloud-shell.png)
+    ![pgAdmin Query tool usage](./instructions276019/open-cases-database.png)
 
 
 ## Using Pattern matching for queries
@@ -510,24 +510,24 @@ The Retrieval-Augmented Generation (RAG) system is a sophisticated architecture 
 ## Exploring Cases RAG application
 We create a sample cases RAG application so you can explore with RAG application.
 
-1. Go to our sample [RAG application](https://pg-rag-demo.azurewebsites.net/)`https://pg-rag-demo.azurewebsites.net/`
+1. Go to our sample [RAG application](https://ignite-pg-rag-demo.azurewebsites.net/)`https://ignite-pg-rag-demo.azurewebsites.net/`
 
 1. The Azure OpenAI credentials are already in the sample app, to chat with the data.
 ![OpenAI credientials](./instructions276019/azure-RAG-app.png)
 
 
-1. Go back to the [RAG application](https://pg-rag-demo.azurewebsites.net/) and explore the RAG application. Try any query to test the limits of the application
+1. Go back to the [RAG application](https://ignite-pg-rag-demo.azurewebsites.net/) and explore the RAG application. Try any query to test the limits of the application
 
 **Suggestions for queries:**
 1. `Water leaking into the apartment from the floor above.`
 
 ## Compare Results of RAG responses using Vector search, Reranker or GraphRAG
 
-1. In [RAG application](https://pg-rag-demo.azurewebsites.net/) upload the JSON file with results from vector search `/Downloads/mslearn-pg-ai/Data`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
+1. In [RAG application](https://pg-rag-demo.azurewebsites.net/) upload the JSON file with results from vector search `/Downloads/mslearn-pg-ai/Setup/Data`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
 
-1. Try with reranker results. Upload the JSON file with results from reranker `/Downloads/mslearn-pg-ai/Data`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
+1. Try with reranker results. Upload the JSON file with results from reranker `/Downloads/mslearn-pg-ai/Setup/Data`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
 
-1. Try with a graph results. Upload the JSON file with results from graph query `/Downloads/mslearn-pg-ai/Data`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
+1. Try with a graph results. Upload the JSON file with results from graph query `/Downloads/mslearn-pg-ai/Setup/Data`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
 
 1. After running the scripts, compare the results of the vector search and the reranker query.
 
@@ -539,7 +539,6 @@ We create a sample cases RAG application so you can explore with RAG application
 
 ------------------------
 # Optional Section Starts
-------------------------
 
 ## Improving Performance with Reranking and GraphRAG
 
@@ -555,7 +554,7 @@ SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
          LATERAL jsonb_array_elements(
              azure_ml.invoke(
                  json_pairs,
-                 deployment_name => 'bge-v2-m3-1',
+                 deployment_name => 'reranker-deployment',
                  timeout_ms => 180000
              )
          ) WITH ORDINALITY AS elem(relevance)
@@ -575,10 +574,12 @@ SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
 
     ![Open file in pgAdmin](./instructions276019/open-file.png)
 
-1. Update `Line 3` with this API key `MHAL0tpPSSk0Z5xW40WyuXkW9h6QAjuu ` and run
+1. Update `Line 3` the following line with this API key `tLjAeqZA7md4IHcApX2m6kRREIkuMmaX`:
 ```
 select azure_ai.set_setting('azure_ml.endpoint_key', '{api-key}');
 ```
+
+1. Run the query
 
 
 you will get a result like this:
@@ -625,7 +626,7 @@ graph AS (
     - The Cypher query matches all relationships (`[r]`) and returns the case_id and the count of references (`refs`) for each node (`n`).
     - The join condition matches the `id` from `semantic_ranked` with the `case_id` from the Cypher query result, casting `case_id` to an integer.
 
-1. We have created a file for you to test reranking.
+1. We have created 2 file for you to test graph queries. 1 is to setup the graph and the other is to run the query.
 
 1. Create new query tool on the same connection
 
@@ -677,4 +678,3 @@ you will get a result like this:
 
 ------------------------
 # Optional Section Ends
-------------------------
