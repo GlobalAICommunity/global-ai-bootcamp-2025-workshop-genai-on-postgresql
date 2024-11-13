@@ -33,7 +33,6 @@ BEGIN
     );
 END $$ LANGUAGE plpgsql;
 
-LOAD 'age';
 SET search_path = public, ag_catalog, "$user";
 
 WITH

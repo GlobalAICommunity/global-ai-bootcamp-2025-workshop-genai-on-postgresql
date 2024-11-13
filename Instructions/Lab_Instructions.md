@@ -30,11 +30,30 @@ Login to your VM with the following credentials...
 # Part 0 - Log into Azure
 Login to Azure Portal with the following credentials.
 
-1. Go to [Azure portal](https://portal.azure.com/)
+1. Go to [Azure portal](https://portal.azure.com/) `https://portal.azure.com/`
     - Username: +++@lab.CloudPortalCredential(User1).Username+++
     - Password:+++@lab.CloudPortalCredential(User1).Password+++
 
 # Part 1 - Getting started with AI on Azure PostgreSQL flexible server
+
+## Clone Ignite Lab repo
+
+1. Open a web browser and navigate to the [Azure portal](https://portal.azure.com/).
+
+2. Select the **Cloud Shell** icon in the Azure portal toolbar to open a new [Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview) pane at the bottom of your browser window.
+
+    ![Screenshot of the Azure toolbar with the Cloud Shell icon highlighted by a red box.](./instructions276019/12-portal-toolbar-cloud-shell.png)
+
+    If prompted, select the required options to open a *Bash* shell. If you have previously used a *PowerShell* console, switch it to a *Bash* shell. 
+    
+    Also pick *No storage account required* and select your subscription.
+
+3. At the Cloud Shell prompt, enter the following to clone the GitHub repo containing exercise resources:
+
+    ```bash
+    git clone https://github.com/Azure-Samples/mslearn-pg-ai.git
+    ```
+
 
 ## Connect to your database using psql in the Azure Cloud Shell
 
@@ -55,7 +74,7 @@ In this task, you connect to the <code spellcheck="false">cases</code> database 
     Once logged in, the <code spellcheck="false">psql</code> prompt for the <code spellcheck="false">cases</code> database is displayed.
 5. Throughout the remainder of this exercise, you continue working in the Cloud Shell, so it may be helpful to expand the pane within your browser window by selecting the **Maximize** button at the top right of the pane.
 <br>
-    ![Screenshot of the Azure Cloud Shell pane with the Maximize button highlighted by a red box.](./instructions276019/azure-cloud-shell-pane-maximize.png)
+    ![Screenshot of the Azure Cloud Shell pane with the Maximize button highlighted by a red box.](./instructions276019/azure-cloud-shell-pane-maximize-new.png)
 
 ## Populate the database with sample data
 
@@ -69,11 +88,17 @@ Before you explore the <code spellcheck="false">azure_ai</code> extension, add a
 
 ### Explore Database
 
+1. When working with <code spellcheck="false">psql</code> in the Cloud Shell, enabling the extended display for query results may be helpful, as it improves the readability of output for subsequent commands. Execute the following command to allow the extended display to be automatically applied.
+
+    ```sql
+    \x auto
+    ```
+
 1. First we will retrieve a sample of data from the cases table in our cases dataset. This allows us to examine the structure and content of the data stored in the database.
 
     ```sql
     SELECT * FROM cases
-    LIMIT 5;
+    LIMIT 1;
     ```
 
 ## Install and configure the <code spellcheck="false">azure_ai</code> extension
@@ -86,12 +111,12 @@ Before using the <code spellcheck="false">azure_ai</code> extension, you must in
 SHOW azure.extensions;
 ```
 
-The command displays the list of extensions on the server's *allowlist*. If everything was correctly installed, your output must include <code spellcheck="false">azure_ai</code> and <code spellcheck="false">vector</code>, like this:
+The command displays the list of extensions on the server's *allowlist*. If everything was correctly installed, your output must include <code spellcheck="false">azure_ai</code>, <code spellcheck="false">vector</code> and <code spellcheck="false">age</code>, like this:
 
 ```
  azure.extensions 
 ------------------
- azure_ai,vector
+ azure_ai,vector,age
 ```
 
 Before an extension can be installed and used in an Azure Database for PostgreSQL flexible server database, it must be added to the server's *allowlist*, as described in [how to use PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#how-to-use-postgresql-extensions).
@@ -104,30 +129,6 @@ Before an extension can be installed and used in an Azure Database for PostgreSQ
     ```
 
 <code spellcheck="false">CREATE EXTENSION</code> loads a new extension into the database by running its script file. This script typically creates new SQL objects such as functions, data types, and schemas. An error is thrown if an extension of the same name already exists. Adding <code spellcheck="false">IF NOT EXISTS</code> allows the command to execute without throwing an error if it is already installed.
-
-## Review the objects contained within the <code spellcheck="false">azure_ai</code> extension
-
-Reviewing the objects within the <code spellcheck="false">azure_ai</code> extension can help you better understand its capabilities. In this task, you inspect the various schemas, user-defined functions (UDFs), and composite types added to the database by the extension.
-
-1. When working with <code spellcheck="false">psql</code> in the Cloud Shell, enabling the extended display for query results may be helpful, as it improves the readability of output for subsequent commands. Execute the following command to allow the extended display to be automatically applied.
-
-    ```sql
-    \x auto
-    ```
-2. The [\dx](https://www.postgresql.org/docs/current/app-psql.html#APP-PSQL-META-COMMAND-DX-LC) is used to list objects contained within an extension. Run the following from the <code spellcheck="false">psql</code> command prompt to view the objects in the <code spellcheck="false">azure_ai</code> extension. You may need to press the space bar to view the full list of objects.
-
-    ```
-    \dx+ azure_ai
-    ```
-
-    the meta-command output shows the <code spellcheck="false">azure_ai</code> extension creates four schemas, multiple user-defined functions (UDFs), several composite types in the database, and the <code spellcheck="false">azure_ai.settings</code> table. Other than the schemas, all object names are preceded by the schema to which they belong. Schemas are used to group related functions and types the extension adds into buckets. The table below lists the schemas added by the extension and provides a brief description of each:
-
-    | Schema | Description |
-    | ------ | ----------- |
-    | <code spellcheck="false">azure_ai</code> | The principal schema where the configuration table and UDFs for interacting with the extension reside. |
-    | <code spellcheck="false">azure_openai</code> | Contains the UDFs that enable calling an Azure OpenAI endpoint. |
-    | <code spellcheck="false">azure_cognitive</code> | Provides UDFs and composite types related to integrating the database with Azure AI Services. |
-    | <code spellcheck="false">azure_ml</code> | Includes the UDFs for integrating Azure Machine Learning (ML) services. |
 
 ### Explore the Azure AI schema
 
@@ -208,7 +209,7 @@ The <code spellcheck="false">azure_openai</code> schema provides the ability to 
 
     | Argument | Type | Default | Description |
     | -------- | ---- | ------- | ----------- |
-    | deployment_name | <code spellcheck="false">text</code> |  | Name of the deployment in Azure OpenAI Studio that contains the <code spellcheck="false">text-embedding-ada-002</code> model. |
+    | deployment_name | <code spellcheck="false">text</code> |  | Name of the deployment in Azure OpenAI Studio that contains the <code spellcheck="false">text-embedding-3-small</code> model. |
     | input | <code spellcheck="false">text</code> or <code spellcheck="false">text[]</code> |  | Input text (or array of text) for which embeddings are created. |
     | batch_size | <code spellcheck="false">integer</code> | 100 | Only for the overload expecting an input of <code spellcheck="false">text[]</code>. Specifies the number of records to process at a time. |
     | timeout_ms | <code spellcheck="false">integer</code> | 3600000 | Timeout in milliseconds after which the operation is stopped. |
@@ -232,7 +233,7 @@ the output looks similar to this:
 ```
  id |      name       |              vector
 ----+-------------------------------+------------------------------------------------------------
-  507122 | Case Name | {0.020068742,0.00022734122,0.0018286322,-0.0064167166,...}
+  507122 | Berschauer/Phillips Construction Co. v. Seattle School District No. 1 | {0.020068742,0.00022734122,0.0018286322,-0.0064167166,...}
 ```
 
 
@@ -246,13 +247,38 @@ The <code spellcheck="false">azure_ai</code> extension allows you to generate em
 
 In this section, we will explore how to leverage AI-driven features within PostgreSQL to enhance data processing and analysis. These features can help automate tasks, improve data insights, and provide advanced functionalities that traditional SQL queries may not offer.
 
-## Using different approaches to enhance results from your application.
+## Before you start this section
+Now you have explored the database in Azure and configured the Azure OpenAI endpoints. We are going to switch over to working in [pgAdmin](https://www.pgadmin.org/). pgAdmin is the most popular and feature-rich open-source administration and development platform for PostgreSQL, the most advanced open-source database in the world.
+
+Using pgAdmin makes it easier to explore the output and understand how the AI features work in PostgreSQL.
+
+1. Setup server connections. Follow instructions in Azure Portal from Connect.
+![Connecting to pgAdmin from Azure](/Instructions/instructions276019/12-portal-toolbar-cloud-shell.png)
+
+    1. **Open pgAdmin 4:** Launch the pgAdmin 4 application on your computer. This should be on your desktop.
+
+    1. **Register a new server:** In the pgAdmin 4 interface, right-click on "Servers" in the left-side browser tree, and select "Register” -> “Server"
+
+    1. **Configure server details:** In the "Register - Server" window. Make sure:
+        - **Hostname**: Find this in Azure Portal
+        - **Maintenance database**: `cases`
+        - **Username**: `pgAdmin`
+        - **Password**: `passw0rd`
+
+    1. **Save the configuration:** Click the "Save" button to save the server registration. pgAdmin 4 will now establish a connection to your Azure Database for PostgreSQL Flexible Server.
+
+    1. **Access the database:** Once connected, you can expand the server in the browser tree to view databases, schemas, and tables. You can also interact with the server using the built-in query tool and manage your database objects.
+
+    1. Open the query tool, to start working with queires in this section.
+
+    ![pgAdmin Query tool usage](./instructions276019/12-portal-toolbar-cloud-shell.png)
+
 
 ## Using Pattern matching for queries
 
 We will explore how to use the <code spellcheck="false">ILIKE</code> clause in SQL to perform case-insensitive searches within text fields. This is particularly useful when you want to find specific cases or reviews that contain certain keywords.
 
-1. We will searching for cases mentioning `"Water leaking into the apartment from the floor above."`. 
+1. We will searching for cases mentioning `"Water leaking into the apartment from the floor above."`
 
     ```sql
     SELECT id, name, opinion
@@ -330,12 +356,7 @@ Now that we have some sample data, it's time to generate and store the embedding
     ```
 
     note that this may take several minutes, depending on the available quota.
-<br>
-    Using <code spellcheck="false">\df</code> to get a better understanding of that the create_embeddings funciton is doing.
 
-    ```sql
-    \df azure_openai.create_embeddings
-    ```
 1. Adding an [DiskANN Vector Index](https://aka.ms/pg-diskann-docs) to improve vector search speed. 
 
     Using [DiskANN Vector Index in Azure Database for PostgreSQL](https://aka.ms/pg-diskann-blog) - DiskANN is a scalable approximate nearest neighbor search algorithm for efficient vector search at any scale. It offers high recall, high queries per second (QPS), and low query latency, even for billion-point datasets. This makes it a powerful tool for handling large volumes of data. [Learn more about DiskANN from Microsoft](https://aka.ms/pg-diskann-docs). Now, you are ready to install the <code spellcheck="false">pg_diskann</code> extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command.
@@ -346,22 +367,11 @@ Now that we have some sample data, it's time to generate and store the embedding
 1. Create the diskann index on a table column that contains vector data.
 
     ```sql
-    CREATE INDEX cases_cosine_diskann ON cases USING diskann (opinions_vector vector_cosine_ops);
+    CREATE INDEX cases_cosine_diskann ON cases USING diskann(opinions_vector vector_cosine_ops);
     ```
     as you scale your data to millions of rows, DiskANN makes vector search more effcient.
 
-1. Postgres will automatically decide when to use the DiskANN index. However, you can use to following command to force the use of the DiskANN index.
-
-    ```sql
-    SET LOCAL enable_seqscan TO OFF; -- force index usage to use DiskANN.
-    SELECT 
-    id, name
-    FROM cases
-    ORDER BY opinions_vector <=> azure_openai.create_embeddings('text-embedding-3-small', 'Water leaking into the apartment from the floor above.')::vector
-    LIMIT 10;
-    ```
-
-4. See an example vector by running this query:
+1. See an example vector by running this query:
 
     ```sql
     SELECT opinions_vector FROM cases LIMIT 1;
@@ -419,7 +429,7 @@ You'll get a result similar to this. Results may vary, as embedding vectors are 
     (10 rows)
 
 ```
-3. You may also project the <code spellcheck="false">cases</code> column to be able to read the text of the matching rows whose opinions were semantically similar. For example, this query returns the best match:
+3. You may also project the <code spellcheck="false">opinion</code> column to be able to read the text of the matching rows whose opinions were semantically similar. For example, this query returns the best match:
 
     ```sql
     SELECT 
@@ -431,13 +441,13 @@ You'll get a result similar to this. Results may vary, as embedding vectors are 
 
 which prints something like:
 
-    ```sql
+```sql
     id          | opinion
     ------------+----------------------------
     615468       | "Morris, J.\nAppeal from an order of nonsuit and dismissal, in an action brought by a tenant to recover damages for injuries to her goods, caused by leakage of water from an upper story. The facts, so far as they are pertinent to our inquiry, are about these: The Hardman Estate is the owner of a building on Yesler Way, in Seattle, the lower portion of which is divided into storerooms, and the upper is used as a hotel. Appellant, who was engaged in the millinery business, occupied one of the storerooms under a written lease...."
-    ```
+```
 
-To intuitively understand semantic search, observe that the opinion mentioned doesn't actually contain the terms `"Water leaking into the apartment from the floor above."`. However it does highlight a document with a section that says `"nonsuit and dismissal, in an action brought by a tenant to recover damages for injuries to her goods, caused by leakage of water from an upper story"`
+To intuitively understand semantic search, observe that the opinion mentioned doesn't actually contain the terms `"Water leaking into the apartment from the floor above."`. However it does highlight a document with a section that says `"nonsuit and dismissal, in an action brought by a tenant to recover damages for injuries to her goods, caused by leakage of water from an upper story"` which is similar.
 
 ### Difference between <code spellcheck="false">tsvector</code> vs <code spellcheck="false">pgvector</code>
 
@@ -453,12 +463,12 @@ In this section, we will explore the concept of hybrid search, which combines bo
 1. With the following query we will perform a semantic and full text search together. This searches for listing “similar to” the input phrase: `"Water leaking into the apartment from the floor above."` AND have the phrase 'Seattle'.
 
 ```sql
-    SELECT 
-    id, name, opinion
-    FROM cases
-    WHERE textsearch @@ phraseto_tsquery('Seattle')
-    ORDER BY opinions_vector <=> azure_openai.create_embeddings('text-embedding-3-small', 'Water leaking into the apartment from the floor above.')::vector
-    LIMIT 5;
+SELECT 
+id, name, opinion
+FROM cases
+WHERE textsearch @@ phraseto_tsquery('Seattle')
+ORDER BY opinions_vector <=> azure_openai.create_embedding('text-embedding-3-small', 'Water leaking into the apartmentfrom the floor above.')::vector
+LIMIT 5;
 ```
 
 You'll get a result similar to this. Results may vary, as embedding vectors are not guaranteed to be deterministic:
@@ -482,7 +492,56 @@ gnees, for the cost of replacing a hot tar roof of a leased warehouse and assess
 m.\nOn June 11, 1975,"
 ```
 
-## Optional - Improving Performance with Reranking and GraphRAG
+# How RAG chatbot accuracy improves with different technique
+
+We will explore how to effectively utilize context within your Retrieval-Augmented Generation (RAG) chatbot. Context is crucial for enhancing the chatbot’s ability to provide relevant and accurate responses, making interactions more meaningful for users.
+
+## What is RAG
+The Retrieval-Augmented Generation (RAG) system is a sophisticated architecture designed to enhance user interactions through a seamless integration of various technological components. At its core, RAG is composed of:
+
+- App UX (web app) for the user experience
+- App server or orchestrator (integration and coordination layer)
+- Azure PostgreSQL Flexible Server 
+- [pgvector extension](https://github.com/pgvector/pgvector) (information retrieval system)
+- Azure OpenAI (LLM for generative AI)
+
+![Screenshot about RAG](./instructions276019/azure-rag.png)
+
+## Exploring Cases RAG application
+We create a sample cases RAG application so you can explore with RAG application.
+
+1. Go to our sample [RAG application](https://pg-rag-demo.azurewebsites.net/)`https://pg-rag-demo.azurewebsites.net/`
+
+1. The Azure OpenAI credentials are already in the sample app, to chat with the data.
+![OpenAI credientials](./instructions276019/azure-RAG-app.png)
+
+
+1. Go back to the [RAG application](https://pg-rag-demo.azurewebsites.net/) and explore the RAG application. Try any query to test the limits of the application
+
+**Suggestions for queries:**
+1. `Water leaking into the apartment from the floor above.`
+
+## Compare Results of RAG responses using Vector search, Reranker or GraphRAG
+
+1. In [RAG application](https://pg-rag-demo.azurewebsites.net/) upload the JSON file with results from vector search `/Downloads/mslearn-pg-ai/Data`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
+
+1. Try with reranker results. Upload the JSON file with results from reranker `/Downloads/mslearn-pg-ai/Data`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
+
+1. Try with a graph results. Upload the JSON file with results from graph query `/Downloads/mslearn-pg-ai/Data`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
+
+1. After running the scripts, compare the results of the vector search and the reranker query.
+
+1. Consider the following aspects while comparing the results:
+    - Accuracy: Which query returns more relevant results?
+    - Understandability: Which response is easier to comprehend and more user-friendly?
+
+1. We believe as your implement more advanced tehcniques you get better accuracy for certain scenarios. 
+
+------------------------
+# Optional Section Starts
+------------------------
+
+## Improving Performance with Reranking and GraphRAG
 
 ### What is a Reranker
 A reranker is a system or algorithm used to improve the relevance of search results. It takes an initial set of results generated by a primary search algorithm and reorders them based on additional criteria or more sophisticated models. The goal of reranking is to enhance the quality and relevance of the results presented to the user, often by leveraging machine learning models that consider various factors such as user behavior, contextual information, and advanced relevance scoring techniques.
@@ -508,10 +567,19 @@ SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
     - `jsonb_array_elements()` - Processes the JSON payload and extracts the relevance score and ordinality for each element to improve the relevance of search results.
     - `elem.relevance` - The relevance is used for reranking the results.
 
-1. We have created a file for you to test reranking.
-```sql
-\i mslearn-pg-ai/Setup/SQLScript/reranker_query.sql
+1. We have created a file for you to test reranking.Create new query tool on the same connection.
+
+    ![Creating new query tool](./instructions276019/new-query-tool.png)
+
+1. Click Open File icon, and find the reranker_query in the Downloads folder. `/Downloads/mslearn-pg-ai/Setup/SQLScript/reranker_query.sql`
+
+    ![Open file in pgAdmin](./instructions276019/open-file.png)
+
+1. Update `Line 3` with this API key `MHAL0tpPSSk0Z5xW40WyuXkW9h6QAjuu ` and run
 ```
+select azure_ai.set_setting('azure_ml.endpoint_key', '{api-key}');
+```
+
 
 you will get a result like this:
 
@@ -557,20 +625,25 @@ graph AS (
     - The Cypher query matches all relationships (`[r]`) and returns the case_id and the count of references (`refs`) for each node (`n`).
     - The join condition matches the `id` from `semantic_ranked` with the `case_id` from the Cypher query result, casting `case_id` to an integer.
 
+1. We have created a file for you to test reranking.
 
-1. Before running the Graph query it `age` needs to be added as a share library for Postgres.
+1. Create new query tool on the same connection
 
-1. Go back to the Postgres in the Azure Portal. In the resource menu, under **Settings**, select **Databases** select **Connect** for the <code spellcheck="false">cases</code> database.
-<br>
-    ![Screenshot of the Azure Database for PostgreSQL Databases page. erver parameters for AGE.](./instructions276019/postgresql-age-shared-lib.png)
+    ![Creating new query tool](./instructions276019/new-query-tool.png)
 
+1. Click Open File icon, and find the reranker_query in the Downloads folder. `/Downloads/mslearn-pg-ai/Setup/SQLScript/graph_setup.sql`
 
-1. We have created a file for you to test graph queries.
+    ![Open file in pgAdmin](./instructions276019/open-file.png)
 
-```sql
-    \i mslearn-pg-ai/Setup/SQLScript/graph_setup.sql;
-    \i mslearn-pg-ai/Setup/SQLScript/graph_query.sql;
-```
+1. Now to run the *graph query*.
+
+1. Create new query tool on the same connection
+
+    ![Creating new query tool](./instructions276019/new-query-tool.png)
+
+1. Click Open File icon, and find the reranker_query in the Downloads folder. `/Downloads/mslearn-pg-ai/Setup/SQLScript/graph_query.sql`
+
+    ![Open file in pgAdmin](./instructions276019/open-file.png)
 
 you will get a result like this:
 
@@ -592,20 +665,7 @@ you will get a result like this:
 
 ### Compare Results
 
-1. Execute the following SQL scripts to perform the vector search and reranker query:
-
-    ```sql
-    \i mslearn-pg-ai/Setup/SQLScript/vector_search.sql;
-    ```
-
-    ```sql
-    \i mslearn-pg-ai/Setup/SQLScript/reranker_query.sql;
-    ```
-    
-    ```sql
-    \i mslearn-pg-ai/Setup/SQLScript/graph_setup.sql;
-    \i mslearn-pg-ai/Setup/SQLScript/graph_query.sql;
-    ```
+1. Execute the following SQL scripts to perform the vector search reranker query and graph query.
 
 2. After running the scripts, compare the results of the vector search and the reranker query.
 
@@ -615,47 +675,6 @@ you will get a result like this:
 
 4. Read the opinions from both results top 10 and decide with is better based on the above criteria. The reranked results should have better results.
 
-# How RAG chatbot accuracy improves with different technique
-
-We will explore how to effectively utilize context within your Retrieval-Augmented Generation (RAG) chatbot. Context is crucial for enhancing the chatbot’s ability to provide relevant and accurate responses, making interactions more meaningful for users.
-
-## What is RAG
-The Retrieval-Augmented Generation (RAG) system is a sophisticated architecture designed to enhance user interactions through a seamless integration of various technological components. At its core, RAG is composed of:
-
-- App UX (web app) for the user experience
-- App server or orchestrator (integration and coordination layer)
-- Azure PostgreSQL Flexible Server 
-- [pgvector extension](https://github.com/pgvector/pgvector) (information retrieval system)
-- Azure OpenAI (LLM for generative AI)
-
-![Screenshot about RAG](./instructions276019/azure-rag.png)
-
-## Exploring Cases RAG application
-We create a sample cases RAG application so you can explore with RAG application.
-
-1. Go to our sample [RAG application](https://pg-rag-demo.azurewebsites.net/)
-
-1. The Azure OpenAI credentials are already in the sample app, to chat with the data.
-![OpenAI credientials](./instructions276019/azure-RAG-app.png)
-
-
-1. Go back to the [RAG application](https://pg-rag-demo.azurewebsites.net/) and explore the RAG application. Try any query to test the limits of the application
-
-**Suggestions for queries:**
-1. `Water leaking into the apartment from the floor above.`
-
-## Compare Results of RAG responses using Vector search, Reranker or GraphRAG
-
-1. In [RAG application](https://pg-rag-demo.azurewebsites.net/) upload the JSON file with results from vector search `\Downloads`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
-
-1. Try with reranker results. Upload the JSON file with results from reranker `\Downloads`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
-
-1. Try with a graph results. Upload the JSON file with results from graph query `\Downloads`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
-
-1. After running the scripts, compare the results of the vector search and the reranker query.
-
-1. Consider the following aspects while comparing the results:
-    - Accuracy: Which query returns more relevant results?
-    - Understandability: Which response is easier to comprehend and more user-friendly?
-
-1. We believe as your implement more advanced tehcniques you get better accuracy for certain scenarios. 
+------------------------
+# Optional Section Ends
+------------------------
