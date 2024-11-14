@@ -34,7 +34,6 @@ CREATE EXTENSION IF NOT EXISTS age CASCADE;
 SELECT * FROM ag_catalog.drop_graph('case_graph', true);
 
 SET search_path = public, ag_catalog, "$user";
-
 SELECT create_graph('case_graph');
 
 -- Create nodes

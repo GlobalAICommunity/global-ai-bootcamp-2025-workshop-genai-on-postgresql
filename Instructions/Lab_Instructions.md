@@ -10,21 +10,22 @@ Login to your VM with the following credentials...
 
 1. [Part 0 - Log into Azure](#part-0---log-into-azure)
 1. [Part 1 - Getting started with AI on Azure PostgreSQL flexible server](#part-1---getting-started-with-ai-on-azure-postgresql-flexible-server)
+    1. [Clone Ignite Lab repo](#clone-ignite-lab-repo)
     1. [Connect to your database using psql in the Azure Cloud Shell](#connect-to-your-database-using-psql-in-the-azure-cloud-shell)
     1. [Populate the database with sample data](#populate-the-database-with-sample-data)
     1. [Install and configure the `azure_ai` extension](#install-and-configure-the-azure_ai-extension)
-    1. [Review the objects contained within the `azure_ai` extension](#review-the-objects-contained-within-the-azure_ai-extension)
 1. [Part 2 - Using AI-driven features in Postgres](#part-2---using-ai-driven-features-in-postgres)
-    1. [Using different approaches to enhance results from your application](#using-different-approaches-to-enhance-results-from-your-application)
+    1. [Installing pgAdmin](#install-pgadmin)
     1. [Using Pattern matching for queries](#using-pattern-matching-for-queries)
     1. [Using Full Text Search](#using-full-text-search)
-    1. [Using Semantic Search and DiskANN](#using-semantic-search-and-diskann)
-    1. [Hybrid Query](#hybrid-query)
+    1. [Using Semantic Search and DiskANN](#using-semantic-search-and-diskann-index)
+    1. [Hybrid Query (Full-Text Search and Semantic Search)](#hybrid-query-full-text-search-and-semantic-search)
 1. [How RAG chatbot accuracy improves with different technique](#how-rag-chatbot-accuracy-improves-with-different-technique)
     1. [Exploring Cases RAG application](#exploring-cases-rag-application)
-1. [Optional - Improving Performance with Reranking and GraphRAG](#optional---improving-performance-with-reranking-and-knowledge-graph)
-    1. [What is a Reranker](#what-is-a-reranker)
-    1. [What is a GraphRAG](#what-is-a-knowledge-graph)
+    1. [Compare Results of RAG responses using Vector search, Reranker or GraphRAG](#compare-results-of-rag-responses-using-vector-search-reranker-or-graphrag)
+1. [Optional - Improving RAG Accuracy with Advanced Techniques - Reranking and GraphRAG](#improving-rag-accuracy-with-advanced-techniques---reranking-and-graphrag)
+    1. [Reranker](#what-is-a-reranker)
+    1. [GraphRAG](#what-is-graphrag)
     1. [Compare Results](#compare-results)
 
 # Part 0 - Log into Azure
@@ -111,12 +112,12 @@ Before using the <code spellcheck="false">azure_ai</code> extension, you must in
 SHOW azure.extensions;
 ```
 
-The command displays the list of extensions on the server's *allowlist*. If everything was correctly installed, your output must include <code spellcheck="false">azure_ai</code>, <code spellcheck="false">vector</code> and <code spellcheck="false">age</code>, like this:
+The command displays the list of extensions on the server's *allowlist*. If everything was correctly installed, your output must include <code spellcheck="false">azure_ai</code>, <code spellcheck="false">vector</code>, <code spellcheck="false">age</code> and <code spellcheck="false">pg_diskann</code> like this:
 
 ```
  azure.extensions 
 ------------------
- azure_ai,vector,age
+ azure_ai,vector,age,pg_diskann
 ```
 
 Before an extension can be installed and used in an Azure Database for PostgreSQL flexible server database, it must be added to the server's *allowlist*, as described in [how to use PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#how-to-use-postgresql-extensions).
@@ -250,9 +251,10 @@ In this section, we will explore how to leverage AI-driven features within Postg
 ## Before you start this section
 Now you have explored the database in Azure and configured the Azure OpenAI endpoints. We are going to switch over to working in [pgAdmin](https://www.pgadmin.org/). pgAdmin is the most popular and feature-rich open-source administration and development platform for PostgreSQL, the most advanced open-source database in the world.
 
+### Install PGAdmin
 Using pgAdmin makes it easier to explore the output and understand how the AI features work in PostgreSQL.
 
-1. Setup server connections. Follow instructions in Azure Portal from Connect.
+1. In the resource menu of your Azure Database for PostgreSQL Flexible Server instance, under **Settings**, select **Connect** and follow instructions in Azure Portal on how to connect to pgAdmin.
 ![Connecting to pgAdmin from Azure](./instructions276019/pgAdmin-from-azure.png)
 
     1. **Open pgAdmin 4:** Launch the pgAdmin 4 application on your computer. This should be on your desktop.
@@ -269,7 +271,7 @@ Using pgAdmin makes it easier to explore the output and understand how the AI fe
 
     1. **Access the database:** Once connected, you can expand the server in the browser tree to view databases, schemas, and tables. You can also interact with the server using the built-in query tool and manage your database objects.
 
-    1. Open the query tool, to start working with queires in this section.
+1. Open the query tool, to start working with queries in this section.
 
     ![pgAdmin Query tool usage](./instructions276019/open-cases-database.png)
 
@@ -467,7 +469,7 @@ SELECT
 id, name, opinion
 FROM cases
 WHERE textsearch @@ phraseto_tsquery('Seattle')
-ORDER BY opinions_vector <=> azure_openai.create_embedding('text-embedding-3-small', 'Water leaking into the apartmentfrom the floor above.')::vector
+ORDER BY opinions_vector <=> azure_openai.create_embeddings('text-embedding-3-small', 'Water leaking into the apartmentfrom the floor above.')::vector
 LIMIT 5;
 ```
 
@@ -517,9 +519,12 @@ We create a sample cases RAG application so you can explore with RAG application
 
 1. Go back to the [RAG application](https://ignite-pg-rag-demo.azurewebsites.net/) and explore the RAG application. Try any query to test the limits of the application
 
+1. In [RAG application](https://pg-rag-demo.azurewebsites.net/) upload the JSON file with results from vector search `/Downloads/mslearn-pg-ai/Setup/Data`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
+
 **Suggestions for queries:**
 1. `Water leaking into the apartment from the floor above. What are the prominent legal precedents from cases in Washington on this problem?`
 2. `When the landlord is sued in court for leaking pipes, infer and give examples of the number of times there was a favorable decision for the lessee?`
+
 
 ## Compare Results of RAG responses using Vector search, Reranker or GraphRAG
 
@@ -540,7 +545,7 @@ We create a sample cases RAG application so you can explore with RAG application
 ------------------------
 # Optional Section Starts
 
-## Improving Performance with Reranking and GraphRAG
+## Improving RAG Accuracy with Advanced Techniques - Reranking and GraphRAG
 
 ### What is a Reranker
 A reranker is a system or algorithm used to improve the relevance of search results. It takes an initial set of results generated by a primary search algorithm and reorders them based on additional criteria or more sophisticated models. The goal of reranking is to enhance the quality and relevance of the results presented to the user, often by leveraging machine learning models that consider various factors such as user behavior, contextual information, and advanced relevance scoring techniques.

@@ -7,7 +7,7 @@ BEGIN
 	json_pairs := generate_json_pairs(query, n);
 	result_json := azure_ml.invoke(
 				json_pairs,
-				deployment_name=>'bge-v2-m3-1',
+				deployment_name=>'reranker-deployment',
 				timeout_ms => 180000);
 	RETURN (
 		SELECT result_json as result
