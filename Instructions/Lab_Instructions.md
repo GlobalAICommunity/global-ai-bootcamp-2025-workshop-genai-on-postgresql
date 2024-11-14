@@ -253,7 +253,7 @@ Now you have explored the database in Azure and configured the Azure OpenAI endp
 Using pgAdmin makes it easier to explore the output and understand how the AI features work in PostgreSQL.
 
 1. Setup server connections. Follow instructions in Azure Portal from Connect.
-![Connecting to pgAdmin from Azure](/Instructions/instructions276019/pgAdmin-from-azure.png)
+![Connecting to pgAdmin from Azure](./instructions276019/pgAdmin-from-azure.png)
 
     1. **Open pgAdmin 4:** Launch the pgAdmin 4 application on your computer. This should be on your desktop.
 
@@ -515,11 +515,11 @@ We create a sample cases RAG application so you can explore with RAG application
 1. The Azure OpenAI credentials are already in the sample app, to chat with the data.
 ![OpenAI credientials](./instructions276019/azure-RAG-app.png)
 
-
 1. Go back to the [RAG application](https://ignite-pg-rag-demo.azurewebsites.net/) and explore the RAG application. Try any query to test the limits of the application
 
 **Suggestions for queries:**
-1. `Water leaking into the apartment from the floor above.`
+1. `Water leaking into the apartment from the floor above. What are the prominent legal precedents from cases in Washington on this problem?`
+2. `When the landlord is sued in court for leaking pipes, infer and give examples of the number of times there was a favorable decision for the lessee?`
 
 ## Compare Results of RAG responses using Vector search, Reranker or GraphRAG
 

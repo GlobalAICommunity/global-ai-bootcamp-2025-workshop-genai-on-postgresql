@@ -96,7 +96,7 @@ resource allowlistExtensions 'Microsoft.DBforPostgreSQL/flexibleServers/configur
   properties: {
     source: 'user-override'
     // TO-DO need to add pg_diskann preview for all subscriptions
-    value: 'azure_ai,vector,age' // Allowlist the Azure AI and vector extensions
+    value: 'azure_ai,vector,age, pg_diskann' // Allowlist the Azure AI and vector extensions
   }
 }
 
