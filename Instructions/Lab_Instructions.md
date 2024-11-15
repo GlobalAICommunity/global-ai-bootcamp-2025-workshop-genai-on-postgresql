@@ -46,8 +46,10 @@ Login to Azure Portal with the following credentials.
     ![Screenshot of the Azure toolbar with the Cloud Shell icon highlighted by a red box.](./instructions276019/12-portal-toolbar-cloud-shell.png)
 
     If prompted, select the required options to open a *Bash* shell. If you have previously used a *PowerShell* console, switch it to a *Bash* shell. 
-    
+    ![Screenshot of the Azure toolbar with the Cloud Shell icon highlighted by a red box.](./instructions276019/select_bash.png)
+
     Also pick *No storage account required* and select your subscription.
+    ![Screenshot of the Azure toolbar with the Cloud Shell icon highlighted by a red box.](./instructions276019/select_storage.png)
 
 3. At the Cloud Shell prompt, enter the following to clone the GitHub repo containing exercise resources:
 
@@ -60,19 +62,22 @@ Login to Azure Portal with the following credentials.
 
 In this task, you connect to the <code spellcheck="false">cases</code> database on your Azure Database for PostgreSQL flexible server using the [psql command-line utility](https://www.postgresql.org/docs/current/app-psql.html) from the [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview).
 
-1. In the [Azure portal](https://portal.azure.com/), navigate to **Resource Groups** and select the resource group with the prefix **rg-learn-postgres**
+1. In the [Azure portal](https://portal.azure.com/), navigate to **Resource Groups** and select the resource group with the name **ResourceGroup1**
     ![Screenshot of the Azure Portal with Resource groups selected](./instructions276019/azure-portal.png)
     
 2. In that resource group select the precreated **Azure Database for PostgreSQL flexible server** instance.
-    ![Screenshot of the Resource group with Azure Database for PostgreSQL flexible server selected](./instructions276019/database_in_azure.png)
+    ![Screenshot of the Resource group with Azure Database for PostgreSQL flexible server selected](./instructions276019/database_in_azure_new.png)
 3. In the resource menu, under **Settings**, select **Databases** select **Connect** for the <code spellcheck="false">cases</code> database.
 <br>
     ![Screenshot of the Azure Database for PostgreSQL Databases page. Databases and Connect for the cases database are highlighted by red boxes.](./instructions276019/postgresql-cases-database-connect.png)
 4. At the "Password for user pgAdmin" prompt in the Cloud Shell, enter the password for the **pgAdmin** login.
-<br>
-    Password: <code spellcheck="false">passw0rd</code>
-<br>
+
+    **MAKE SURE YOU TYPE IN YOUR PASSWORD, COPY & PASTE WILL NOT WORK**
+
+    **Password:** <code spellcheck="false">passw0rd</code>
+
     Once logged in, the <code spellcheck="false">psql</code> prompt for the <code spellcheck="false">cases</code> database is displayed.
+
 5. Throughout the remainder of this exercise, you continue working in the Cloud Shell, so it may be helpful to expand the pane within your browser window by selecting the **Maximize** button at the top right of the pane.
 <br>
     ![Screenshot of the Azure Cloud Shell pane with the Maximize button highlighted by a red box.](./instructions276019/azure-cloud-shell-pane-maximize-new.png)
@@ -105,20 +110,29 @@ Before you explore the <code spellcheck="false">azure_ai</code> extension, add a
 ## Setting up PGAdmin
 Now you have explored the database in Azure and configured the Azure OpenAI endpoints. We are going to switch over to working in [pgAdmin](https://www.pgadmin.org/). pgAdmin is the most popular and feature-rich open-source administration and development platform for PostgreSQL, the most advanced open-source database in the world.
 
-Using pgAdmin makes it easier to explore the output and understand how the AI features work in PostgreSQL.
+Using pgAdmin makes it easier to explore the output and understand how the AI features work in PostgreSQL. 
+
+> Note: pgAdmin is already installed on your VM, you with find a *blue elephant icon* on your desktop.
+
+1. In a new tab, open the [Azure portal](https://portal.azure.com/), navigate to **Resource Groups** and select the resource group with the name **ResourceGroup1**
+    ![Screenshot of the Azure Portal with Resource groups selected](./instructions276019/azure-portal.png)
+
+1. In that resource group select the precreated **Azure Database for PostgreSQL flexible server** instance.
+    ![Screenshot of the Resource group with Azure Database for PostgreSQL flexible server selected](./instructions276019/database_in_azure_new.png)
 
 1. In the resource menu of your Azure Database for PostgreSQL Flexible Server instance, under **Settings**, select **Connect** and follow instructions in Azure Portal on how to connect to pgAdmin.
 ![Connecting to pgAdmin from Azure](./instructions276019/pgAdmin-from-azure.png)
 
-    1. **Open pgAdmin 4:** Launch the pgAdmin 4 application on your computer. This should be on your desktop.
+    1. **Open pgAdmin 4:** Launch the pgAdmin 4 application on your computer. *This should be on your desktop.*
 
-    1. **Register a new server:** In the pgAdmin 4 interface, right-click on "Servers" in the left-side browser tree, and select "Register” -> “Server"
+    1. **Register a new server:** In the pgAdmin 4 interface, *right-click* on "Servers" in the left-side browser tree, and select **"Register”** -> **“Server"**
 
-    1. **Configure server details:** In the "Register - Server" window. Make sure:
+    1. **Configure server details:** In the **"Register - Server"** window. Make sure:
         - **Hostname**: Find this in Azure Portal
         - **Maintenance database**: `cases`
         - **Username**: `pgAdmin`
         - **Password**: `passw0rd`
+        - **Port**: `5432`
 
     1. **Save the configuration:** Click the "Save" button to save the server registration. pgAdmin 4 will now establish a connection to your Azure Database for PostgreSQL Flexible Server.
 
@@ -133,7 +147,7 @@ Using pgAdmin makes it easier to explore the output and understand how the AI fe
 
 Before using the <code spellcheck="false">azure_ai</code> extension, you must install it into your database and configure it to connect to your Azure AI Services resources. The <code spellcheck="false">azure_ai</code> extension allows you to integrate the Azure OpenAI and Azure AI Language services into your database. To enable the extension in your database, follow these steps:
 
-1. Execute the following command at the <code spellcheck="false">psql</code> prompt to verify that the <code spellcheck="false">azure_ai</code> and the <code spellcheck="false">vector</code> extensions were successfully added to your server's *allowlist* by the Bicep deployment script you ran when setting up your environment:
+1. Execute the following command in **pgAdmin** to verify that the <code spellcheck="false">azure_ai</code> and the <code spellcheck="false">vector</code> extensions were successfully added to your server's *allowlist* by the Bicep deployment script you ran when setting up your environment:
 
 ```sql
 SHOW azure.extensions;
@@ -162,16 +176,15 @@ Before an extension can be installed and used in an Azure Database for PostgreSQ
 
 The <code spellcheck="false">azure_ai</code> schema provides the framework for directly interacting with Azure AI and ML services from your database. It contains functions for setting up connections to those services and retrieving them from the <code spellcheck="false">settings</code> table, which is also hosted in the same schema. The <code spellcheck="false">settings</code> table provides secure storage in the database for endpoints and keys associated with your Azure AI and ML services.
 
-1. Review the functions defined in the  <code spellcheck="false">azure_ai</code> schema. Review the schema in the [Microsoft documention](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/generative-ai-azure-overview#configure-the-azure_ai-extension)
+1. Review the functions defined in the  <code spellcheck="false">azure_ai</code> schema. 
+    - Review the schema in the [Microsoft documention](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/generative-ai-azure-overview#configure-the-azure_ai-extension)
 
-    ```sql
-    List of functions
          Schema |  Name  | Result data type | Argument data types | Type 
-        ----------+-------------+------------------+----------------------+------
+        ----------|-------------|------------------|----------------------|------
          azure_ai | get_setting | text      | key text      | func
          azure_ai | set_setting | void      | key text, value text | func
          azure_ai | version  | text      |           | func
-    ```
+
 
 The <code spellcheck="false">set_setting()</code> function lets you set the endpoint and key of your Azure AI and ML services so that the extension can connect to them. It accepts a **key** and the **value** to assign to it. The <code spellcheck="false">azure_ai.get_setting()</code> function provides a way to retrieve the values you set with the <code spellcheck="false">set_setting()</code> function. It accepts the **key** of the setting you want to view and returns the value assigned to it. For both methods, the key must be one of the following:
 
@@ -221,7 +234,9 @@ The <code spellcheck="false">set_setting()</code> function lets you set the endp
 
 The <code spellcheck="false">azure_openai</code> schema provides the ability to integrate the creation of vector embedding of text values into your database using Azure OpenAI. Using this schema, you can [generate embeddings with Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/how-to/embeddings) directly from the database to create vector representations of input text, which can then be used in vector similarity searches, as well as consumed by machine learning models. The schema contains a single function, <code spellcheck="false">create_embeddings()</code>, with two overloads. One overload accepts a single input string, and the other expects an array of input strings.
 
-1. Review the details of the functions in the <code spellcheck="false">azure_openai</code> schema. Review in the [Microsoft documention](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/generative-ai-azure-openai#configure-openai-endpoint-and-key)
+1. Review the details of the functions in the <code spellcheck="false">azure_openai</code> schema. 
+
+    * Review in the [Microsoft documention](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/generative-ai-azure-openai#configure-openai-endpoint-and-key)
 
     The docs will shows the two overloads of the <code spellcheck="false">azure_openai.create_embeddings()</code> function, allowing you to review the differences between the two versions of the function and the types they return. The <code spellcheck="false">Argument data types</code> property in the output reveals the list of arguments the two function overloads expect:
 
@@ -234,7 +249,7 @@ The <code spellcheck="false">azure_openai</code> schema provides the ability to 
     | throw_on_error | <code spellcheck="false">boolean</code> | true | Flag indicating whether the function should, on error, throw an exception resulting in a rollback of the wrapping transaction. |
     | max_attempts | <code spellcheck="false">integer</code> | 1 | Number of times to retry the call to Azure OpenAI service in the event of a failure. |
     | retry_delay_ms | <code spellcheck="false">integer</code> | 1000 | Amount of time, in milliseconds, to wait before attempting to retry calling the Azure OpenAI service endpoint. |
-2. To provide a simplified example of using the function, run the following query, which creates a vector embedding for the <code spellcheck="false">opinion</code> field in the <code spellcheck="false">cases</code> table. The <code spellcheck="false">deployment_name</code> parameter in the function is set to <code spellcheck="false">embedding</code>, which is the name of the deployment of the <code spellcheck="false">text-embedding-ada-002</code> model in your Azure OpenAI service (it was created with that name by the Bicep deployment script):
+2. To provide a simplified example of using the function, run the following query, which creates a vector embedding for the <code spellcheck="false">opinion</code> field in the <code spellcheck="false">cases</code> table. The <code spellcheck="false">deployment_name</code> parameter in the function is set to <code spellcheck="false">embedding</code>, which is the name of the deployment of the <code spellcheck="false">text-embedding-3-small</code> model in your Azure OpenAI service:
 
     ```sql
     SELECT
@@ -265,6 +280,8 @@ The <code spellcheck="false">azure_ai</code> extension allows you to generate em
 
 In this section, we will explore how to leverage AI-driven features within PostgreSQL to enhance data processing and analysis. These features can help automate tasks, improve data insights, and provide advanced functionalities that traditional SQL queries may not offer.
 
+>NOTE: Make sure you are in **pgAdmin** for the following steps.
+
 ## Using Pattern matching for queries
 
 We will explore how to use the <code spellcheck="false">ILIKE</code> clause in SQL to perform case-insensitive searches within text fields. This is particularly useful when you want to find specific cases or reviews that contain certain keywords.
@@ -277,13 +294,13 @@ We will explore how to use the <code spellcheck="false">ILIKE</code> clause in S
     WHERE opinion ILIKE '%Water leaking into the apartment from the floor above';
     ```
 
-You'll get a result similar to this:
+    You'll get a result similar to this:
 
-```
-id | name | opinion
-----+------+---------
-(0 rows)
-```
+    ```
+    id | name | opinion
+    ----+------+---------
+    (0 rows)
+    ```
 
 However, it fall short as the exact words are not mentioned in the opinion. As you can see there are no results for what to user wants to find. We need to try another appoach.
 
@@ -300,7 +317,7 @@ In this section, we will implement full-text search capabilities in PostgreSQL t
     GENERATED ALWAYS AS (to_tsvector('english', name || LEFT(opinion, 8000))) STORED;
     ```
 
-1. We will perform a full-text search on the listings table to find entries that have a phrase `"Water leaking into the apartment from the floor above."`. It falls short returning only 1 result. <code spellcheck="false">websearch_to_tsquery</code>
+1. We will perform a full-text search on the listings table to find entries that have a phrase <code spellcheck="false">"Water leaking into the apartment from the floor above."</code>. It falls short returning only 1 result. <code spellcheck="false">websearch_to_tsquery</code>
 
     ```sql
     SELECT id, name, opinion
@@ -308,15 +325,16 @@ In this section, we will implement full-text search capabilities in PostgreSQL t
     WHERE textsearch @@ websearch_to_tsquery('Water leaking into the apartment from the floor above.');
     ```
 
-You'll get a result similar to this:
-```
- id | name | opinion 
-----+------+--------
-4237124  | Pham v. Corbett | "Spearman, C.J.\n1 Landlord Lang Pham brought this unlawful detainer action against tenants Shakia Morgan and Shawn Corbett (Tenants)."
-(1 rows)
-```
+    You'll get a result similar to this:
 
-Improvement from %ILIKE, but not great. As you can see there is only one result for what to user wants to find. We need to try another appoach.
+    ```
+    id | name | opinion 
+    ----+------+--------
+    4237124  | Pham v. Corbett | "Spearman, C.J.\n1 Landlord Lang Pham brought this unlawful detainer action against tenants Shakia Morgan and Shawn Corbett (Tenants)."
+    (1 rows)
+    ```
+
+Improvement from *%ILIKE*, but not great. As you can see there is only one result for what to user wants to find. We need to try another appoach.
 
 ## Using Semantic Search and DiskANN Index
 
@@ -371,8 +389,8 @@ Now that we have some sample data, it's time to generate and store the embedding
     you will get a result similar to this, but with 1536 vector columns. The output will take up alot of your screen, just hit enter to move down the page to see all of the output:
 
     ```sql
-    -[ RECORD 1 ]--+------ ...
-    opinions_vector | [-0.0018742813,-0.04530062,0.055145424, ... ]
+    opinions_vector | 
+    [-0.0018742813,-0.04530062,0.055145424, ... ]
     ```
 
 ### Perform a semantic search query
@@ -388,8 +406,8 @@ Now that you have listing data augmented with embedding vectors, it's time to ru
     you will get a result like this:
 
     ```sql
-    -[ RECORD 1 ]-----+-- ...
-    create_embeddings | {-0.0020871465,-0.002830255,0.030923981, ...}
+    create_embeddings | 
+    {-0.0020871465,-0.002830255,0.030923981, ...}
     ```
 2. Use the embedding in a cosine search (<code spellcheck="false"><=></code> represents cosine distance operation), fetching the top 10 most similar cases to the query.
 
@@ -402,24 +420,24 @@ Now that you have listing data augmented with embedding vectors, it's time to ru
     LIMIT 10;
     ```
 
-You'll get a result similar to this. Results may vary, as embedding vectors are not guaranteed to be deterministic:
+    You'll get a result similar to this. Results may vary, as embedding vectors are not guaranteed to be deterministic:
 
-```sql
-    id    |                          name                          
-    ---------+--------------------------------------------------------
-    615468 | Le Vette v. Hardman Estate
-    768356 | Uhl Bros. v. Hull
-    8848167 | Wilkening v. Watkins Distributors, Inc.
-    558730 | Burns v. Dufresne
-    594079 | Martindale Clothing Co. v. Spokane & Eastern Trust Co.
-    1086651 | Bach v. Sarich
-    869848 | Tailored Ready Co. v. Fourth & Pike Street Corp.
-    2601920 | Pappas v. Zerwoodis
-    4912975 | Conradi v. Arnold
-    1091260 | Brant v. Market Basket Stores, Inc.
-    (10 rows)
+    ```sql
+        id    |                          name                          
+        ---------+--------------------------------------------------------
+        615468 | Le Vette v. Hardman Estate
+        768356 | Uhl Bros. v. Hull
+        8848167 | Wilkening v. Watkins Distributors, Inc.
+        558730 | Burns v. Dufresne
+        594079 | Martindale Clothing Co. v. Spokane & Eastern Trust Co.
+        1086651 | Bach v. Sarich
+        869848 | Tailored Ready Co. v. Fourth & Pike Street Corp.
+        2601920 | Pappas v. Zerwoodis
+        4912975 | Conradi v. Arnold
+        1091260 | Brant v. Market Basket Stores, Inc.
+        (10 rows)
 
-```
+    ```
 3. You may also project the <code spellcheck="false">opinion</code> column to be able to read the text of the matching rows whose opinions were semantically similar. For example, this query returns the best match:
 
     ```sql
@@ -438,7 +456,7 @@ which prints something like:
     615468       | "Morris, J.\nAppeal from an order of nonsuit and dismissal, in an action brought by a tenant to recover damages for injuries to her goods, caused by leakage of water from an upper story. The facts, so far as they are pertinent to our inquiry, are about these: The Hardman Estate is the owner of a building on Yesler Way, in Seattle, the lower portion of which is divided into storerooms, and the upper is used as a hotel. Appellant, who was engaged in the millinery business, occupied one of the storerooms under a written lease...."
 ```
 
-To intuitively understand semantic search, observe that the opinion mentioned doesn't actually contain the terms `"Water leaking into the apartment from the floor above."`. However it does highlight a document with a section that says `"nonsuit and dismissal, in an action brought by a tenant to recover damages for injuries to her goods, caused by leakage of water from an upper story"` which is similar.
+To intuitively understand semantic search, observe that the opinion mentioned doesn't actually contain the terms <code spellcheck="false">"Water leaking into the apartment from the floor above."</code>. However it does highlight a document with a section that says <code spellcheck="false">"nonsuit and dismissal, in an action brought by a tenant to recover damages for injuries to her goods, caused by leakage of water from an upper story"</code> which is similar.
 
 ### Difference between <code spellcheck="false">tsvector</code> vs <code spellcheck="false">pgvector</code>
 
@@ -451,7 +469,7 @@ In this section, we will explore the concept of hybrid search, which combines bo
 
 ### Perform a hybrid search query
 
-1. With the following query we will perform a semantic and full text search together. This searches for listing “similar to” the input phrase: `"Water leaking into the apartment from the floor above."` AND have the phrase 'Seattle'.
+1. With the following query we will perform a semantic and full text search together. This searches for listing “similar to” the input phrase: <code spellcheck="false">"Water leaking into the apartment from the floor above."</code> AND have the phrase 'Seattle'.
 
 ```sql
 SELECT 
@@ -543,17 +561,17 @@ A reranker is a system or algorithm used to improve the relevance of search resu
 
 1. Before we execute the reranker query to improve the relevance of your search results. We should understand the following important snippet of code for reranking. **DO NOT RUN THIS CODE. THIS IS JUST FOR DEMONSTRATION**
 
-    ```
-    SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
-            FROM json_payload,
-                LATERAL jsonb_array_elements(
-                        azure_ml.invoke(
-                            json_pairs,
-                            deployment_name => 'reranker-deployment',
-                            timeout_ms => 180000
-                        )
-                    ) WITH ORDINALITY AS elem(relevance)
-            )
+    ```sql-nocopy
+        SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
+                FROM json_payload,
+                    LATERAL jsonb_array_elements(
+                            azure_ml.invoke(
+                                json_pairs,
+                                deployment_name => 'reranker-deployment',
+                                timeout_ms => 180000
+                            )
+                        ) WITH ORDINALITY AS elem(relevance)
+                )
     ```
 
 1. This SQL snippet performs the following actions:
@@ -577,23 +595,22 @@ select azure_ai.set_setting('azure_ml.endpoint_key', '{api-key}');
 1. Run the query. **This query is going to taake around 15 secs**
 
 
-you will get a result like this:
+    you will get a result like this:
 
-```sql
-   id    |                       case_name                        
----------+-------------------------------------------------------
-  768356 | Uhl Bros. v. Hull
-  615468 | Le Vette v. Hardman Estate
- 4912975 | Conradi v. Arnold
- 8848167 | Wilkening v. Watkins Distributors, Inc.
- 1086651 | Bach v. Sarich
- 2601920 | Pappas v. Zerwoodis
- 1091260 | Brant v. Market Basket Stores, Inc.
-  594079 | Martindale Clothing Co. v. Spokane & Eastern Trust Co.
-  869848 | Tailored Ready Co. v. Fourth & Pike Street Corp.
-  558730 | Burns v. Dufresne
-
-```
+    ```sql-nocopy
+    id    |                       case_name                        
+    ---------+-------------------------------------------------------
+    768356 | Uhl Bros. v. Hull
+    615468 | Le Vette v. Hardman Estate
+    4912975 | Conradi v. Arnold
+    8848167 | Wilkening v. Watkins Distributors, Inc.
+    1086651 | Bach v. Sarich
+    2601920 | Pappas v. Zerwoodis
+    1091260 | Brant v. Market Basket Stores, Inc.
+    594079 | Martindale Clothing Co. v. Spokane & Eastern Trust Co.
+    869848 | Tailored Ready Co. v. Fourth & Pike Street Corp.
+    558730 | Burns v. Dufresne
+    ```
 
 ### What is GraphRAG
 GraphRAG uses knowledge graphs to provide substantial improvements in question-and-answer performance when reasoning about complex information. A Knowledge Graph is a structured representation of information that captures relationships between entities in a graph format. It is used to integrate, manage, and query data from diverse sources, providing a unified view of interconnected data. [Apache Graph Extension](https://age.apache.org/age-manual/master/index.html) (AGE) is a PostgreSQL extension developed under the Apache Incubator project. AGE is designed to provide graph database functionality, enabling users to store and query graph data efficiently within PostgreSQL. 
@@ -604,7 +621,7 @@ GraphRAG uses knowledge graphs to provide substantial improvements in question-a
 
 1. Important snippet of code to understand for graph queries with cypher. **DO NOT RUN THIS CODE. THIS IS JUST FOR DEMONSTRATION**
 
-    ```    
+    ```sql-nocopy
     graph AS (
     SELECT graph_query.refs, semantic_ranked.vector_rank, semantic_ranked.*, graph_query.case_id from semantic_ranked
 	LEFT JOIN cypher('case_graph', $$
