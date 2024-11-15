@@ -35,6 +35,7 @@ Login to Azure Portal with the following credentials.
     - Username: +++@lab.CloudPortalCredential(User1).Username+++
     - Password:+++@lab.CloudPortalCredential(User1).Password+++
 
+===
 # Part 1 - Getting started with AI on Azure PostgreSQL flexible server
 
 ## Clone Ignite Lab repo
@@ -62,6 +63,10 @@ Login to Azure Portal with the following credentials.
 
 In this task, you connect to the <code spellcheck="false">cases</code> database on your Azure Database for PostgreSQL flexible server using the [psql command-line utility](https://www.postgresql.org/docs/current/app-psql.html) from the [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview).
 
+> [!alert]
+Using <code spellcheck="false">T</code> to paste text won't work in Cloud Shell correctly, you will have to manually copy and paste as plain text.
+However, using <code spellcheck="false">T</code> will work fine when we move to using pgAdmin query tool in the next section.
+
 1. In the [Azure portal](https://portal.azure.com/), navigate to **Resource Groups** and select the resource group with the name **ResourceGroup1**
     ![Screenshot of the Azure Portal with Resource groups selected](./instructions276019/azure-portal.png)
     
@@ -70,11 +75,14 @@ In this task, you connect to the <code spellcheck="false">cases</code> database 
 3. In the resource menu, under **Settings**, select **Databases** select **Connect** for the <code spellcheck="false">cases</code> database.
 <br>
     ![Screenshot of the Azure Database for PostgreSQL Databases page. Databases and Connect for the cases database are highlighted by red boxes.](./instructions276019/postgresql-cases-database-connect.png)
-4. At the "Password for user pgAdmin" prompt in the Cloud Shell, enter the password for the **pgAdmin** login.
 
+>[!hint]  This step will ask you to launch the new cloud shell instance, this is fine, you will not lose the previously cloned content.
+
+4. At the "Password for user pgAdmin" prompt in the Cloud Shell, enter the password for the **pgAdmin** login.
+    > [!alert]
     **MAKE SURE YOU TYPE IN YOUR PASSWORD, COPY & PASTE WILL NOT WORK**
 
-    **Password:** <code spellcheck="false">passw0rd</code>
+    **Password:** +++passw0rd+++
 
     Once logged in, the <code spellcheck="false">psql</code> prompt for the <code spellcheck="false">cases</code> database is displayed.
 
@@ -85,6 +93,9 @@ In this task, you connect to the <code spellcheck="false">cases</code> database 
 ## Populate the database with sample data
 
 Before you explore the <code spellcheck="false">azure_ai</code> extension, add a couple of tables to the <code spellcheck="false">cases</code> database and populate them with sample data so you have information to work with as you review the extension's functionality.
+
+> [!hint]
+When pasting into Cloud Shell, paste as plain text. And in some occasions you will have to remove trailing *[[200~* characters and following *~* character.
 
 1. Run the following commands to create the <code spellcheck="false">cases</code> tables for storing us cases law data :
 
@@ -155,7 +166,7 @@ SHOW azure.extensions;
 
 The command displays the list of extensions on the server's *allowlist*. If everything was correctly installed, your output must include <code spellcheck="false">azure_ai</code>, <code spellcheck="false">vector</code>, <code spellcheck="false">age</code> and <code spellcheck="false">pg_diskann</code> like this:
 
-```
+```sql-nocopy
  azure.extensions 
 ------------------
  azure_ai,vector,age,pg_diskann
@@ -212,7 +223,7 @@ The <code spellcheck="false">set_setting()</code> function lets you set the endp
     ![Screenshot of the Azure OpenAI service's Keys and Endpoints page is displayed, with the KEY 1 and Endpoint copy buttons highlighted by red boxes.](./instructions276019/azure-openai-keys-and-endpoints.png)
 <br>
     You can use either <code spellcheck="false">KEY 1</code> or <code spellcheck="false">KEY 2</code>. Always having two keys allows you to securely rotate and regenerate keys without causing service disruption.
-3. Once you have your endpoint and key, maximize the Cloud Shell pane again, then use the commands below to add your values to the configuration table. Ensure you replace the <code spellcheck="false">{endpoint}</code> and <code spellcheck="false">{api-key}</code> tokens with the values you copied from the Azure portal.
+3. Once you have your endpoint and key, maximize the *pgAdmin* window, then use the commands below to add your values to the configuration table. Ensure you replace the <code spellcheck="false">{endpoint}</code> and <code spellcheck="false">{api-key}</code> tokens with the values you copied from the Azure portal.
 
     ```sql
     SELECT azure_ai.set_setting('azure_openai.endpoint', '{endpoint}');
@@ -263,7 +274,7 @@ The <code spellcheck="false">azure_openai</code> schema provides the ability to 
 the output looks similar to this:
 
 
-```
+```sql-nocopy
  id |      name       |              vector
 ----+-------------------------------+------------------------------------------------------------
   507122 | Berschauer/Phillips Construction Co. v. Seattle School District No. 1 | {0.020068742,0.00022734122,0.0018286322,-0.0064167166,...}
@@ -276,6 +287,7 @@ for brevity, the vector embeddings are abbreviated in the above output.
 
 The <code spellcheck="false">azure_ai</code> extension allows you to generate embeddings for input text. To enable the generated vectors to be stored alongside the rest of your data in the database, you must install the <code spellcheck="false">vector</code> extension by following the guidance in the [enable vector support in your database](https://learn.microsoft.com/azure/postgresql/flexible-server/how-to-use-pgvector#enable-extension) documentation. However, that is outside of the scope of this exercise.
 
+===
 # Part 2 - Using AI-driven features in Postgres
 
 In this section, we will explore how to leverage AI-driven features within PostgreSQL to enhance data processing and analysis. These features can help automate tasks, improve data insights, and provide advanced functionalities that traditional SQL queries may not offer.
@@ -296,7 +308,7 @@ We will explore how to use the <code spellcheck="false">ILIKE</code> clause in S
 
     You'll get a result similar to this:
 
-    ```
+    ```sql-nocopy
     id | name | opinion
     ----+------+---------
     (0 rows)
@@ -327,7 +339,7 @@ In this section, we will implement full-text search capabilities in PostgreSQL t
 
     You'll get a result similar to this:
 
-    ```
+    ```sql-nocopy
     id | name | opinion 
     ----+------+--------
     4237124  | Pham v. Corbett | "Spearman, C.J.\n1 Landlord Lang Pham brought this unlawful detainer action against tenants Shakia Morgan and Shawn Corbett (Tenants)."
@@ -388,7 +400,7 @@ Now that we have some sample data, it's time to generate and store the embedding
 
     you will get a result similar to this, but with 1536 vector columns. The output will take up alot of your screen, just hit enter to move down the page to see all of the output:
 
-    ```sql
+    ```sql-nocopy
     opinions_vector | 
     [-0.0018742813,-0.04530062,0.055145424, ... ]
     ```
@@ -422,7 +434,7 @@ Now that you have listing data augmented with embedding vectors, it's time to ru
 
     You'll get a result similar to this. Results may vary, as embedding vectors are not guaranteed to be deterministic:
 
-    ```sql
+    ```sql-nocopy
         id    |                          name                          
         ---------+--------------------------------------------------------
         615468 | Le Vette v. Hardman Estate
@@ -450,7 +462,7 @@ Now that you have listing data augmented with embedding vectors, it's time to ru
 
 which prints something like:
 
-```sql
+```sql-nocopy
     id          | opinion
     ------------+----------------------------
     615468       | "Morris, J.\nAppeal from an order of nonsuit and dismissal, in an action brought by a tenant to recover damages for injuries to her goods, caused by leakage of water from an upper story. The facts, so far as they are pertinent to our inquiry, are about these: The Hardman Estate is the owner of a building on Yesler Way, in Seattle, the lower portion of which is divided into storerooms, and the upper is used as a hotel. Appellant, who was engaged in the millinery business, occupied one of the storerooms under a written lease...."
@@ -482,7 +494,7 @@ LIMIT 5;
 
 You'll get a result similar to this. Results may vary, as embedding vectors are not guaranteed to be deterministic:
 
-```sql
+```sql-nocopy
 id          | name                       | opinion
 ------------+----------------------------+----------------------------
 615468 | Le Vette v. Hardman Estate              | "Morris, J.\nAppeal from an order of nonsuit and dismissal, in a
@@ -500,7 +512,7 @@ gainst both the city of Seattle and Kang county to recover damages to real prope
 gnees, for the cost of replacing a hot tar roof of a leased warehouse and assessing attorney fees and costs. We affir
 m.\nOn June 11, 1975,"
 ```
-
+===
 # How RAG chatbot accuracy improves with different technique
 
 We will explore how to effectively utilize context within your Retrieval-Augmented Generation (RAG) chatbot. Context is crucial for enhancing the chatbot’s ability to provide relevant and accurate responses, making interactions more meaningful for users.
@@ -549,8 +561,8 @@ We create a sample cases RAG application so you can explore with RAG application
 
 1. We believe as your implement more advanced tehcniques you get better accuracy for certain scenarios. 
 
-------------------------
-# Optional Section Starts
+===
+# Advanced Section
 
 ## Improving RAG Accuracy with Advanced Techniques - Reranking and GraphRAG
 
@@ -559,19 +571,21 @@ A reranker is a system or algorithm used to improve the relevance of search resu
 
 ### Using a Reranker
 
-1. Before we execute the reranker query to improve the relevance of your search results. We should understand the following important snippet of code for reranking. **DO NOT RUN THIS CODE. THIS IS JUST FOR DEMONSTRATION**
+1. Before we execute the reranker query to improve the relevance of your search results. We should understand the following important snippet of code for reranking. 
+    > [!alert]
+    **DO NOT RUN THIS CODE. THIS IS JUST FOR DEMONSTRATION**
 
     ```sql-nocopy
-        SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
-                FROM json_payload,
-                    LATERAL jsonb_array_elements(
-                            azure_ml.invoke(
-                                json_pairs,
-                                deployment_name => 'reranker-deployment',
-                                timeout_ms => 180000
-                            )
-                        ) WITH ORDINALITY AS elem(relevance)
-                )
+    SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
+            FROM json_payload,
+                LATERAL jsonb_array_elements(
+                        azure_ml.invoke(
+                            json_pairs,
+                            deployment_name => 'reranker-deployment',
+                            timeout_ms => 180000
+                        )
+                    ) WITH ORDINALITY AS elem(relevance)
+            )
     ```
 
 1. This SQL snippet performs the following actions:
@@ -588,11 +602,11 @@ A reranker is a system or algorithm used to improve the relevance of search resu
     ![Open file in pgAdmin](./instructions276019/open-file.png)
 
 1. Update *Line 3* the following line with this API key `tLjAeqZA7md4IHcApX2m6kRREIkuMmaX`:
-```
-select azure_ai.set_setting('azure_ml.endpoint_key', '{api-key}');
-```
+    ```
+    select azure_ai.set_setting('azure_ml.endpoint_key', '{api-key}');
+    ```
 
-1. Run the query. **This query is going to taake around 15 secs**
+1. Run the query. **This query is going to take around 15 secs**
 
 
     you will get a result like this:
@@ -619,7 +633,10 @@ GraphRAG uses knowledge graphs to provide substantial improvements in question-a
 
 1. Before we execute the graph query to improve the relevance of your search results. We should understand the following important snippet of code for reranking
 
-1. Important snippet of code to understand for graph queries with cypher. **DO NOT RUN THIS CODE. THIS IS JUST FOR DEMONSTRATION**
+1. Important snippet of code to understand for graph queries with cypher. 
+    
+    > [!alert]
+    **DO NOT RUN THIS CODE. THIS IS JUST FOR DEMONSTRATION**
 
     ```sql-nocopy
     graph AS (
@@ -649,7 +666,7 @@ GraphRAG uses knowledge graphs to provide substantial improvements in question-a
 
     ![Open file in pgAdmin](./instructions276019/open-file.png)
 
-1. Now to run the *graph query*. **This query is going to taake around 45 secs**
+1. Now to run the *graph query*. **This query is going to take around 45 secs**
 
 1. Create new query tool on the same connection
 
@@ -661,7 +678,7 @@ GraphRAG uses knowledge graphs to provide substantial improvements in question-a
 
 you will get a result *like* this:
 
-```sql
+```sql-nocopy
    id    |                       case_name                        
 ---------+-------------------------------------------------------
 615468	 | Le Vette v. Hardman Estate
@@ -686,6 +703,3 @@ you will get a result *like* this:
     - Performance: Which query executes faster?
 
 1. Read the opinions from both results top 10 and decide with is better based on the above criteria. The reranked results should have better results.
-
-------------------------
-# Optional Section Ends
