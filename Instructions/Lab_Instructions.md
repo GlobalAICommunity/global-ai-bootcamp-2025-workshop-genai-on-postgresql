@@ -13,9 +13,9 @@ Login to your VM with the following credentials...
     1. [Clone Ignite Lab repo](#clone-ignite-lab-repo)
     1. [Connect to your database using psql in the Azure Cloud Shell](#connect-to-your-database-using-psql-in-the-azure-cloud-shell)
     1. [Populate the database with sample data](#populate-the-database-with-sample-data)
+    1. [Setting up pgAdmin](#setting-up-pgadmin)
     1. [Install and configure the `azure_ai` extension](#install-and-configure-the-azure_ai-extension)
 1. [Part 2 - Using AI-driven features in Postgres](#part-2---using-ai-driven-features-in-postgres)
-    1. [Installing pgAdmin](#install-pgadmin)
     1. [Using Pattern matching for queries](#using-pattern-matching-for-queries)
     1. [Using Full Text Search](#using-full-text-search)
     1. [Using Semantic Search and DiskANN](#using-semantic-search-and-diskann-index)
@@ -102,6 +102,33 @@ Before you explore the <code spellcheck="false">azure_ai</code> extension, add a
     LIMIT 1;
     ```
 
+## Setting up PGAdmin
+Now you have explored the database in Azure and configured the Azure OpenAI endpoints. We are going to switch over to working in [pgAdmin](https://www.pgadmin.org/). pgAdmin is the most popular and feature-rich open-source administration and development platform for PostgreSQL, the most advanced open-source database in the world.
+
+Using pgAdmin makes it easier to explore the output and understand how the AI features work in PostgreSQL.
+
+1. In the resource menu of your Azure Database for PostgreSQL Flexible Server instance, under **Settings**, select **Connect** and follow instructions in Azure Portal on how to connect to pgAdmin.
+![Connecting to pgAdmin from Azure](./instructions276019/pgAdmin-from-azure.png)
+
+    1. **Open pgAdmin 4:** Launch the pgAdmin 4 application on your computer. This should be on your desktop.
+
+    1. **Register a new server:** In the pgAdmin 4 interface, right-click on "Servers" in the left-side browser tree, and select "Register” -> “Server"
+
+    1. **Configure server details:** In the "Register - Server" window. Make sure:
+        - **Hostname**: Find this in Azure Portal
+        - **Maintenance database**: `cases`
+        - **Username**: `pgAdmin`
+        - **Password**: `passw0rd`
+
+    1. **Save the configuration:** Click the "Save" button to save the server registration. pgAdmin 4 will now establish a connection to your Azure Database for PostgreSQL Flexible Server.
+
+    1. **Access the database:** Once connected, you can expand the server in the browser tree to view databases, schemas, and tables. You can also interact with the server using the built-in query tool and manage your database objects.
+
+1. Open the query tool, to start working with queries in this section.
+
+    ![pgAdmin Query tool usage](./instructions276019/open-cases-database.png)
+
+
 ## Install and configure the <code spellcheck="false">azure_ai</code> extension
 
 Before using the <code spellcheck="false">azure_ai</code> extension, you must install it into your database and configure it to connect to your Azure AI Services resources. The <code spellcheck="false">azure_ai</code> extension allows you to integrate the Azure OpenAI and Azure AI Language services into your database. To enable the extension in your database, follow these steps:
@@ -135,24 +162,18 @@ Before an extension can be installed and used in an Azure Database for PostgreSQ
 
 The <code spellcheck="false">azure_ai</code> schema provides the framework for directly interacting with Azure AI and ML services from your database. It contains functions for setting up connections to those services and retrieving them from the <code spellcheck="false">settings</code> table, which is also hosted in the same schema. The <code spellcheck="false">settings</code> table provides secure storage in the database for endpoints and keys associated with your Azure AI and ML services.
 
-1. To review the functions defined in a schema, you can use the [\df](https://www.postgresql.org/docs/current/app-psql.html#APP-PSQL-META-COMMAND-DF-LC), specifying the schema whose functions should be displayed. Run the following to view the functions in the <code spellcheck="false">azure_ai</code> schema:
+1. Review the functions defined in the  <code spellcheck="false">azure_ai</code> schema. Review the schema in the [Microsoft documention](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/generative-ai-azure-overview#configure-the-azure_ai-extension)
 
+    ```sql
+    List of functions
+         Schema |  Name  | Result data type | Argument data types | Type 
+        ----------+-------------+------------------+----------------------+------
+         azure_ai | get_setting | text      | key text      | func
+         azure_ai | set_setting | void      | key text, value text | func
+         azure_ai | version  | text      |           | func
     ```
-    \df azure_ai.*
-    ```
 
-    the output of the command should be a table similar to this:
-
-```sql
-List of functions
-     Schema |  Name  | Result data type | Argument data types | Type 
-    ----------+-------------+------------------+----------------------+------
-     azure_ai | get_setting | text      | key text      | func
-     azure_ai | set_setting | void      | key text, value text | func
-     azure_ai | version  | text      |           | func
-```
-
-the <code spellcheck="false">set_setting()</code> function lets you set the endpoint and key of your Azure AI and ML services so that the extension can connect to them. It accepts a **key** and the **value** to assign to it. The <code spellcheck="false">azure_ai.get_setting()</code> function provides a way to retrieve the values you set with the <code spellcheck="false">set_setting()</code> function. It accepts the **key** of the setting you want to view and returns the value assigned to it. For both methods, the key must be one of the following:
+The <code spellcheck="false">set_setting()</code> function lets you set the endpoint and key of your Azure AI and ML services so that the extension can connect to them. It accepts a **key** and the **value** to assign to it. The <code spellcheck="false">azure_ai.get_setting()</code> function provides a way to retrieve the values you set with the <code spellcheck="false">set_setting()</code> function. It accepts the **key** of the setting you want to view and returns the value assigned to it. For both methods, the key must be one of the following:
 
 | Key | Description |
 | --- | ----------- |
@@ -175,7 +196,7 @@ the <code spellcheck="false">set_setting()</code> function lets you set the endp
 
     b. Once you are on the Azure OpenAI resource page, in the resource menu, under the **Resource Management** section, select **Keys and Endpoint**, then copy your endpoint and one of the available keys.
 <br>
-    ! [Screenshot of the Azure OpenAI service's Keys and Endpoints page is displayed, with the KEY 1 and Endpoint copy buttons highlighted by red boxes.](instructions276019/12-azure-openai-keys-and-endpoints.png)
+    ![Screenshot of the Azure OpenAI service's Keys and Endpoints page is displayed, with the KEY 1 and Endpoint copy buttons highlighted by red boxes.](./instructions276019/azure-openai-keys-and-endpoints.png)
 <br>
     You can use either <code spellcheck="false">KEY 1</code> or <code spellcheck="false">KEY 2</code>. Always having two keys allows you to securely rotate and regenerate keys without causing service disruption.
 3. Once you have your endpoint and key, maximize the Cloud Shell pane again, then use the commands below to add your values to the configuration table. Ensure you replace the <code spellcheck="false">{endpoint}</code> and <code spellcheck="false">{api-key}</code> tokens with the values you copied from the Azure portal.
@@ -200,13 +221,9 @@ the <code spellcheck="false">set_setting()</code> function lets you set the endp
 
 The <code spellcheck="false">azure_openai</code> schema provides the ability to integrate the creation of vector embedding of text values into your database using Azure OpenAI. Using this schema, you can [generate embeddings with Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/how-to/embeddings) directly from the database to create vector representations of input text, which can then be used in vector similarity searches, as well as consumed by machine learning models. The schema contains a single function, <code spellcheck="false">create_embeddings()</code>, with two overloads. One overload accepts a single input string, and the other expects an array of input strings.
 
-1. As you did above, you can use the [\df](https://www.postgresql.org/docs/current/app-psql.html#APP-PSQL-META-COMMAND-DF-LC) to view the details of the functions in the <code spellcheck="false">azure_openai</code> schema:
+1. Review the details of the functions in the <code spellcheck="false">azure_openai</code> schema. Review in the [Microsoft documention](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/generative-ai-azure-openai#configure-openai-endpoint-and-key)
 
-    ```
-    \df azure_openai.*
-    ```
-
-    the output shows the two overloads of the <code spellcheck="false">azure_openai.create_embeddings()</code> function, allowing you to review the differences between the two versions of the function and the types they return. The <code spellcheck="false">Argument data types</code> property in the output reveals the list of arguments the two function overloads expect:
+    The docs will shows the two overloads of the <code spellcheck="false">azure_openai.create_embeddings()</code> function, allowing you to review the differences between the two versions of the function and the types they return. The <code spellcheck="false">Argument data types</code> property in the output reveals the list of arguments the two function overloads expect:
 
     | Argument | Type | Default | Description |
     | -------- | ---- | ------- | ----------- |
@@ -247,34 +264,6 @@ The <code spellcheck="false">azure_ai</code> extension allows you to generate em
 # Part 2 - Using AI-driven features in Postgres
 
 In this section, we will explore how to leverage AI-driven features within PostgreSQL to enhance data processing and analysis. These features can help automate tasks, improve data insights, and provide advanced functionalities that traditional SQL queries may not offer.
-
-## Before you start this section
-Now you have explored the database in Azure and configured the Azure OpenAI endpoints. We are going to switch over to working in [pgAdmin](https://www.pgadmin.org/). pgAdmin is the most popular and feature-rich open-source administration and development platform for PostgreSQL, the most advanced open-source database in the world.
-
-### Install PGAdmin
-Using pgAdmin makes it easier to explore the output and understand how the AI features work in PostgreSQL.
-
-1. In the resource menu of your Azure Database for PostgreSQL Flexible Server instance, under **Settings**, select **Connect** and follow instructions in Azure Portal on how to connect to pgAdmin.
-![Connecting to pgAdmin from Azure](./instructions276019/pgAdmin-from-azure.png)
-
-    1. **Open pgAdmin 4:** Launch the pgAdmin 4 application on your computer. This should be on your desktop.
-
-    1. **Register a new server:** In the pgAdmin 4 interface, right-click on "Servers" in the left-side browser tree, and select "Register” -> “Server"
-
-    1. **Configure server details:** In the "Register - Server" window. Make sure:
-        - **Hostname**: Find this in Azure Portal
-        - **Maintenance database**: `cases`
-        - **Username**: `pgAdmin`
-        - **Password**: `passw0rd`
-
-    1. **Save the configuration:** Click the "Save" button to save the server registration. pgAdmin 4 will now establish a connection to your Azure Database for PostgreSQL Flexible Server.
-
-    1. **Access the database:** Once connected, you can expand the server in the browser tree to view databases, schemas, and tables. You can also interact with the server using the built-in query tool and manage your database objects.
-
-1. Open the query tool, to start working with queries in this section.
-
-    ![pgAdmin Query tool usage](./instructions276019/open-cases-database.png)
-
 
 ## Using Pattern matching for queries
 
@@ -534,7 +523,7 @@ We create a sample cases RAG application so you can explore with RAG application
 
 1. Try with a graph results. Upload the JSON file with results from graph query `/Downloads/mslearn-pg-ai/Setup/Data`, The file should be already uploaded in your VM. Try any query to test the limits of the application.
 
-1. After running the scripts, compare the results of the vector search and the reranker query.
+1. After see all 3 results, you can compare the results of the vector search, reranker query and Graph RAG.
 
 1. Consider the following aspects while comparing the results:
     - Accuracy: Which query returns more relevant results?
@@ -552,19 +541,20 @@ A reranker is a system or algorithm used to improve the relevance of search resu
 
 ### Using a Reranker
 
-1. Before we execute the reranker query to improve the relevance of your search results. We should understand the following important snippet of code for reranking
-```
-SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
-    FROM json_payload,
-         LATERAL jsonb_array_elements(
-             azure_ml.invoke(
-                 json_pairs,
-                 deployment_name => 'reranker-deployment',
-                 timeout_ms => 180000
-             )
-         ) WITH ORDINALITY AS elem(relevance)
-)
-```
+1. Before we execute the reranker query to improve the relevance of your search results. We should understand the following important snippet of code for reranking. **DO NOT RUN THIS CODE. THIS IS JUST FOR DEMONSTRATION**
+
+    ```
+    SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
+            FROM json_payload,
+                LATERAL jsonb_array_elements(
+                        azure_ml.invoke(
+                            json_pairs,
+                            deployment_name => 'reranker-deployment',
+                            timeout_ms => 180000
+                        )
+                    ) WITH ORDINALITY AS elem(relevance)
+            )
+    ```
 
 1. This SQL snippet performs the following actions:
     - `azure_ml.invoke()` - Invokes the Azure Machine Learning service with the specified deployment name and timeout. [BGE model](https://huggingface.co/BAAI/bge-m3) is being used for reranker.
@@ -579,12 +569,12 @@ SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
 
     ![Open file in pgAdmin](./instructions276019/open-file.png)
 
-1. Update `Line 3` the following line with this API key `tLjAeqZA7md4IHcApX2m6kRREIkuMmaX`:
+1. Update *Line 3* the following line with this API key `tLjAeqZA7md4IHcApX2m6kRREIkuMmaX`:
 ```
 select azure_ai.set_setting('azure_ml.endpoint_key', '{api-key}');
 ```
 
-1. Run the query
+1. Run the query. **This query is going to taake around 15 secs**
 
 
 you will get a result like this:
@@ -612,17 +602,18 @@ GraphRAG uses knowledge graphs to provide substantial improvements in question-a
 
 1. Before we execute the graph query to improve the relevance of your search results. We should understand the following important snippet of code for reranking
 
-1. Important snippet of code to understand for graph queries with cypher.
-```sql
-graph AS (
+1. Important snippet of code to understand for graph queries with cypher. **DO NOT RUN THIS CODE. THIS IS JUST FOR DEMONSTRATION**
+
+    ```    
+    graph AS (
     SELECT graph_query.refs, semantic_ranked.vector_rank, semantic_ranked.*, graph_query.case_id from semantic_ranked
 	LEFT JOIN cypher('case_graph', $$
             MATCH ()-[r]->(n)
             RETURN n.case_id, COUNT(r) AS refs
         $$) as graph_query(case_id TEXT, refs BIGINT)
 	ON semantic_ranked.id = graph_query.case_id::int
-)
-```
+    )
+    ```
 
 1. This SQL snippet performs the following actions:
     - Selects the `refs` (reference count) and `case_id` from the `graph` (create with [Apache Age extension](https://techcommunity.microsoft.com/blog/adforpostgresql/introducing-support-for-graph-data-in-azure-database-for-postgresql-preview/4275628)).
@@ -641,7 +632,7 @@ graph AS (
 
     ![Open file in pgAdmin](./instructions276019/open-file.png)
 
-1. Now to run the *graph query*.
+1. Now to run the *graph query*. **This query is going to taake around 45 secs**
 
 1. Create new query tool on the same connection
 
@@ -651,7 +642,7 @@ graph AS (
 
     ![Open file in pgAdmin](./instructions276019/open-file.png)
 
-you will get a result like this:
+you will get a result *like* this:
 
 ```sql
    id    |                       case_name                        
@@ -671,15 +662,13 @@ you will get a result like this:
 
 ### Compare Results
 
-1. Execute the following SQL scripts to perform the vector search reranker query and graph query.
+1. Compare the results of the vector search, reranker query and Graph RAG.
 
-2. After running the scripts, compare the results of the vector search and the reranker query.
-
-3. Consider the following aspects while comparing the results:
+1. Consider the following aspects while comparing the results:
     - Accuracy: Which query returns more relevant results?
     - Performance: Which query executes faster?
 
-4. Read the opinions from both results top 10 and decide with is better based on the above criteria. The reranked results should have better results.
+1. Read the opinions from both results top 10 and decide with is better based on the above criteria. The reranked results should have better results.
 
 ------------------------
 # Optional Section Ends

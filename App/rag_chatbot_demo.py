@@ -18,7 +18,7 @@ def render_cta_link(url, label, font_awesome_icon):
     return st.markdown(button_code, unsafe_allow_html=True)
     
 def enable_sidebar():
-    # Sidebar for API key and connection settingsc
+    # Sidebar for API key and connection settings
     with st.sidebar:
         st.header("Configuration Settings")
 
@@ -67,12 +67,6 @@ st.write(
 st.title("RAG Chatbot Demo with PostgreSQL")
 
 enable_sidebar()
-client = AzureOpenAI(
-                    azure_endpoint=endpoint,
-                    api_key=api_key,
-                    api_version="2024-05-01-preview",
-                )
-st.session_state.client = client  # Store client in session state
 
 # Check if client is available in session state
 if "client" in st.session_state:
@@ -125,7 +119,7 @@ def generate_response(context, question):
             model=deployment,
             messages=messages,
             max_tokens=4096,
-            temperature=1,
+            temperature=0,
             top_p=0.95,
             frequency_penalty=0,
             presence_penalty=0,
