@@ -681,17 +681,16 @@ you will get a result *like* this:
 ```sql-nocopy
    id    |                       case_name                        
 ---------+-------------------------------------------------------
-615468	 | Le Vette v. Hardman Estate
-1034620	 | Jorgensen v. Massart
-1279441	 | Tope v. King County
-4938756	 | Stevens v. King County
-1095193	 | Thomas v. Housing Authority
-4953587	 | Schedler v. Wagner
-867981	 | DiBlasi v. City of Seattle
-634444	 | Trigg v. Timmerman
 1186056	 | Stuart v. Coldwell Banker Commercial Group, Inc.
-1376187	 | Wiltse v. Albertsons Inc.
-
+4975399	 | Laurelo Terrace Inc v. City of Seattle
+1034620	 | Jorgensen v. Massart 
+1095193	 | Thomas v. Housing Authority
+1127907  | Foisy v. Wyman
+1279441  | Tope v. King County
+1186056	 | Le Vette v. Hardman Estate 
+561149   | Wood v. City of Tacoma
+566840.  | Quinn v. Peterson & Co.
+4953587	 | Schedler v. Wagner
 ```
 
 ### Compare Results
@@ -703,3 +702,22 @@ you will get a result *like* this:
     - Performance: Which query executes faster?
 
 1. Read the opinions from both results top 10 and decide with is better based on the above criteria. The reranked results should have better results.
+
+
+## Golden Dataset
+Top 10 most relevant cases for the query. `Water leaking into the apartment from the floor above. What are the prominent legal precedents from cases in Washington on this problem?` in the sample dataset for this lab.
+
+```sql-nocopy
+   id    |                       case_name                        
+---------+-------------------------------------------------------
+1186056	 | Stuart v. Coldwell Banker Commercial Group, Inc.
+4975399	 | Laurelon Terrace Inc v. City of Seattle
+1034620	 | Jorgensen v. Massart 
+1095193	 | Thomas v. Housing Authority
+1127907  | Foisy v. Wyman
+1279441  | Tope v. King County
+1186056	 | Le Vette v. Hardman Estate 
+768356   | Uhl Bros. v. Hull
+1086651  | Stevens v. King County
+2601920  | Pappas v. Zerwoodis
+```
