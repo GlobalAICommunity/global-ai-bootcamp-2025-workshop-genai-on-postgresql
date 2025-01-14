@@ -1,5 +1,5 @@
 -- Reranker Setup
-select azure_ai.set_setting('azure_ml.scoring_endpoint','https://reranker-endpt-for-ignite.eastus.inference.ml.azure.com/score');
+select azure_ai.set_setting('azure_ml.scoring_endpoint','https://mlukrerankeraml-bgev2m3.southcentralus.inference.ml.azure.com/score');
 select azure_ai.set_setting('azure_ml.endpoint_key', '');
 
 -- Reranker
@@ -37,7 +37,7 @@ semantic AS (
          LATERAL jsonb_array_elements(
              azure_ml.invoke(
                  json_pairs,
-                 deployment_name => 'reranker-deployment',
+                 deployment_name => 'bge-v2-m3-1',
                  timeout_ms => 180000
              )
          ) WITH ORDINALITY AS elem(relevance)
