@@ -27,7 +27,7 @@ Login to your VM with the following credentials...
     1. [Compare Results of RAG responses using Vector search, Reranker or GraphRAG](#compare-results-of-rag-responses-using-vector-search-reranker-or-graphrag)
 
 # Part 0 - Log into Azure
-Login to Azure Portal with the following credentials.
+Open Edge in the lab environment and login to Azure Portal with the following credentials.
 
 1. Go to [Azure portal](https://portal.azure.com/) `https://portal.azure.com/`
     - Username: +++@lab.CloudPortalCredential(User1).Username+++
@@ -49,6 +49,8 @@ Login to Azure Portal with the following credentials.
 
     Also pick *No storage account required* and select your subscription.
     ![Screenshot of the Azure toolbar with the Cloud Shell icon highlighted by a red box.](./instructions276019/select_storage.png)
+
+    Click Apply after selecting your subscription 
 
 3. At the Cloud Shell prompt, enter the following to clone the GitHub repo containing exercise resources:
 
@@ -437,12 +439,12 @@ We already created a sample Legal Cases RAG application so you can explore RAG a
 
 ### Review Accuracy of vector search queries:
 
-For the sample question, we have manually identify 10 legal cases that will produce the best answers. To explore the accuracy of vector search follow the instruction below:
+For the sample question, we have manually identifed 10 legal cases that will produce the best answers. To explore the accuracy of vector search follow the instruction below:
 
 1. Click the graph icon in the chat bubble to see with cases were used to answer the question. 
 ![Graph screenshot](./instructions282962/RAG-app-demo-graph-icon.png)
 
-2. From the Citation Graph, you will see Vector search **only retrieve 40% of the most revelvant cases**. The orange indicates what was retrieved to answer the questions, and green indicates what should be retrieved for the sample question.
+2. From the Citation Graph, you will see Vector search **only retrieve 40% of the most relevant cases**. The orange indicates what was retrieved to answer the questions, and green indicates what should be retrieved for the sample question.
 ![Recall of Graph screenshot](./instructions282962/RAG-app-demo-recall-graph.png)
 
 ===
@@ -467,7 +469,7 @@ Using the same example from the vector search example in the preview section. To
 
 1. Click the graph icon in the chat bubble to see with cases were used to answer the question. 
 
-1. From the Citation Graph, you will see semantic reranker has a slighted improve accuracy, and **retrieves 60% of the most revelvant cases**.
+1. From the Citation Graph, you will see semantic reranker has a slighty improve accuracy, and **retrieves 60% of the most revelvant cases**.
 
 ### How to implement a reranker for queries
 >[!alert] Make sure you are using **pgAdmin** for the following steps.
@@ -509,7 +511,7 @@ Using the same example from the vector search example in the preview section. To
 
 1. Run the query. 
 
-    >[!tip] This query is going to take around 3 secs
+    >[!tip] This query is going to take around 3 seconds
 
 
 you will get a result like this:
@@ -593,13 +595,13 @@ Using the same example from the vector search example in the preview section. To
     ![Open file in pgAdmin](./instructions276019/open-file.png)
 
 1. Now to run the *graph query* to create the node and connections between cases in your database. 
-    >[!tip] This query is going to take around 5 secs
+    >[!tip] This query is going to take around 5 seconds
 
 1. Create new query tool on the same connection
 
     ![Creating new query tool](./instructions276019/new-query-tool.png)
 
-1. Click Open File icon, and find the reranker_query in the Downloads folder. `/Downloads/mslearn-pg-ai/Setup/SQLScript/graph_query.sql`
+1. Click Open File icon, and find the graph_query in the Downloads folder. `/Downloads/mslearn-pg-ai/Setup/SQLScript/graph_query.sql`
 
     ![Open file in pgAdmin](./instructions276019/open-file.png)
 
