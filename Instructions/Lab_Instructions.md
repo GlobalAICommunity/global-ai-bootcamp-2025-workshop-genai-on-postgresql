@@ -21,12 +21,21 @@
 # Part 0 - Deploy the resources
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FGlobalAICommunity%2Fglobal-ai-bootcamp-2025-workshop-genai-on-postgresql%2Frefs%2Fheads%2Fmain%2FSetup%2FInfra%2Fdeploy.json)
 
-Note: Since we are using text-embedding-3-small model, pick one of the following regions for deployment: australiaeast,canadaeast,eastus,eastus2, japaneast,switserlandnorth, westus
+```
+Note: Since we are using text-embedding-3-small model, pick one of the following regions for deployment: 
+- australiaeast
+- canadaeast
+- eastus
+- eastus2
+- japaneast
+- switserlandnorth
+- westus
+```
 
-Keep in mind what resource group you created the resources, and note down the password that you filled.
+Keep in mind what resource group you created the resources in, and note down the password that you used.
 
 
-===
+
 # Part 1 - Getting started with AI on Azure PostgreSQL flexible server
 
 ## Clone TechConnect Lab repo
@@ -60,10 +69,11 @@ In this task, you connect to the <code spellcheck="false">cases</code> database 
 2. In that resource group select the precreated **Azure Database for PostgreSQL flexible server** instance.
     ![Screenshot of the Resource group with Azure Database for PostgreSQL flexible server selected](./instructions276019/database_in_azure_new.png)
 3. In the resource menu, under **Settings**, select **Databases** select **Connect** for the <code spellcheck="false">cases</code> database.
-<br>
+
+
     ![Screenshot of the Azure Database for PostgreSQL Databases page. Databases and Connect for the cases database are highlighted by red boxes.](./instructions276019/postgresql-cases-database-connect.png)
 
->[!hint]  This step will ask you to launch the new cloud shell instance, this is fine, you will not lose the previously cloned content.
+>**This step will ask you to launch the new cloud shell instance, this is fine, you will not lose the previously cloned content.**
 
 4. At the "Password for user pgAdmin" prompt in the Cloud Shell, enter the password for the **pgAdmin** login.
     > [!alert]
@@ -83,22 +93,22 @@ Before you explore the <code spellcheck="false">azure_ai</code> extension, add a
 
 1. Run the following commands to create the <code spellcheck="false">cases</code> tables for storing us cases law data :
 
-    > +++\i mslearn-pg-ai/Setup/SQLScript/initialize_dataset.sql;+++
+    > \i mslearn-pg-ai/Setup/SQLScript/initialize_dataset.sql;
 
 ### Explore Database
 
 1. When working with <code spellcheck="false">psql</code> in the Cloud Shell, enabling the extended display for query results may be helpful, as it improves the readability of output for subsequent commands. Execute the following command to allow the extended display to be automatically applied.
 ata :
 
-    > +++\x auto+++
+    > \x auto
 
 1. First we will retrieve a sample of data from the cases table in our cases dataset. This allows us to examine the structure and content of the data stored in the database.
 ata :
 
-    > +++SELECT * FROM cases
-    LIMIT 1;+++
+    > SELECT * FROM cases
+    LIMIT 1;
 
-===
+
 ## Setting up PGAdmin
 Now you have explored the database in Azure and configured the Azure OpenAI endpoints. We are going to switch over to working in [pgAdmin](https://www.pgadmin.org/). pgAdmin is the most popular and feature-rich open-source administration and development platform for PostgreSQL, the most advanced open-source database in the world.
 
@@ -245,7 +255,7 @@ for brevity, the vector embeddings are abbreviated in the above output.
 
 The <code spellcheck="false">azure_ai</code> extension allows you to generate embeddings for input text. To enable the generated vectors to be stored alongside the rest of your data in the database, you must install the <code spellcheck="false">vector</code> extension by following the guidance in the [enable vector support in your database](https://learn.microsoft.com/azure/postgresql/flexible-server/how-to-use-pgvector#enable-extension) documentation. However, that is outside of the scope of this exercise.
 
-===
+
 # Part 2 - Using AI-driven features in Postgres
 
 In this section, we will explore how to leverage AI-driven features within PostgreSQL to enhance data processing and analysis. These features can help automate tasks, improve data insights, and provide advanced functionalities that traditional SQL queries may not offer.
@@ -396,7 +406,7 @@ which prints something like:
 
 To intuitively understand semantic search, observe that the opinion mentioned doesn't actually contain the terms <code spellcheck="false">"Water leaking into the apartment from the floor above."</code>. However it does highlight a document with a section that says <code spellcheck="false">"nonsuit and dismissal, in an action brought by a tenant to recover damages for injuries to her goods, caused by leakage of water from an upper story"</code> which is similar.
 
-===
+
 #  Part 3 - How RAG chatbot accuracy improves with different technique
 
 We will explore how to effectively utilize context within your Retrieval-Augmented Generation (RAG) chatbot. Context is crucial for enhancing the chatbot’s ability to provide relevant and accurate responses, making interactions more meaningful for users.
@@ -440,7 +450,7 @@ For the sample question, we have manually identifed 10 legal cases that will pro
 2. From the Citation Graph, you will see Vector search **only retrieve 40% of the most relevant cases**. The orange indicates what was retrieved to answer the questions, and green indicates what should be retrieved for the sample question.
 ![Recall of Graph screenshot](./instructions282962/RAG-app-demo-recall-graph.png)
 
-===
+
 
 #  Part 4 - Improving RAG Accuracy with Advanced Techniques - Reranking and GraphRAG
 
@@ -524,7 +534,7 @@ you will get a result like this:
     558730 | Burns v. Dufresne
 ```
 
-===
+
 
 ### What is GraphRAG
 GraphRAG uses knowledge graphs to provide substantial improvements in question-and-answer performance when reasoning about complex information. A Knowledge Graph is a structured representation of information that captures relationships between entities in a graph format. It is used to integrate, manage, and query data from diverse sources, providing a unified view of interconnected data. [Apache Graph Extension](https://age.apache.org/age-manual/master/index.html) (AGE) is a PostgreSQL extension developed under the Apache Incubator project. AGE is designed to provide graph database functionality, enabling users to store and query graph data efficiently within PostgreSQL. 
@@ -616,7 +626,7 @@ you will get a result *like* this:
 
 ```
 
-===
+
 
 ## Compare Results of RAG responses using Vector search, Reranker or GraphRAG
 
