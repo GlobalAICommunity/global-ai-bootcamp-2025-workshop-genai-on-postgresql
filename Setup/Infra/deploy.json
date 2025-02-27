@@ -1,0 +1,231 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.33.93.31351",
+      "templateHash": "10598469992798446269"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "serverName": {
+      "type": "string",
+      "defaultValue": "[format('psql-learn-{0}-{1}', resourceGroup().location, uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Unique name for the Azure Database for PostgreSQL."
+      }
+    },
+    "postgresVersion": {
+      "type": "string",
+      "defaultValue": "16",
+      "metadata": {
+        "description": "The version of PostgreSQL to use."
+      }
+    },
+    "adminLogin": {
+      "type": "string",
+      "defaultValue": "pgAdmin",
+      "minLength": 1,
+      "metadata": {
+        "description": "Login name of the database administrator."
+      }
+    },
+    "adminLoginPassword": {
+      "type": "securestring",
+      "minLength": 8,
+      "metadata": {
+        "description": "Password for the database administrator."
+      }
+    },
+    "azureOpenAIServiceName": {
+      "type": "string",
+      "defaultValue": "[format('oai-learn-{0}-{1}', resourceGroup().location, uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Unique name for the Azure OpenAI service."
+      }
+    },
+    "restore": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Restore the service instead of creating a new instance. This is useful if you previously soft-delted the service and want to restore it. If you are restoring a service, set this to true. Otherwise, leave this as false."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+      "apiVersion": "2023-03-01-preview",
+      "name": "[parameters('serverName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_D2ds_v4",
+        "tier": "GeneralPurpose"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('adminLogin')]",
+        "administratorLoginPassword": "[parameters('adminLoginPassword')]",
+        "authConfig": {
+          "activeDirectoryAuth": "Disabled",
+          "passwordAuth": "Enabled",
+          "tenantId": "[subscription().tenantId]"
+        },
+        "backup": {
+          "backupRetentionDays": 7,
+          "geoRedundantBackup": "Disabled"
+        },
+        "createMode": "Default",
+        "highAvailability": {
+          "mode": "Disabled"
+        },
+        "storage": {
+          "autoGrow": "Disabled",
+          "storageSizeGB": 32,
+          "tier": "P10"
+        },
+        "version": "[parameters('postgresVersion')]"
+      },
+      "metadata": {
+        "description": "Creates a PostgreSQL Flexible Server."
+      }
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/firewallRules",
+      "apiVersion": "2023-03-01-preview",
+      "name": "[format('{0}/{1}', parameters('serverName'), 'AllowAllAzureServicesAndResourcesWithinAzureIps')]",
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "0.0.0.0"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('serverName'))]"
+      ],
+      "metadata": {
+        "description": "Firewall rule that checks the \"Allow public access from any Azure service within Azure to this server\" box."
+      }
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/firewallRules",
+      "apiVersion": "2023-03-01-preview",
+      "name": "[format('{0}/{1}', parameters('serverName'), 'AllowAll')]",
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "255.255.255.255"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('serverName'))]"
+      ],
+      "metadata": {
+        "description": "Firewall rule to allow all IP addresses to connect to the server. Should only be used for lab purposes."
+      }
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
+      "apiVersion": "2023-03-01-preview",
+      "name": "[format('{0}/{1}', parameters('serverName'), 'cases')]",
+      "properties": {
+        "charset": "UTF8",
+        "collation": "en_US.UTF8"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('serverName'))]"
+      ],
+      "metadata": {
+        "description": "Creates the \"cases\" database in the PostgreSQL Flexible Server."
+      }
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/configurations",
+      "apiVersion": "2023-03-01-preview",
+      "name": "[format('{0}/{1}', parameters('serverName'), 'azure.extensions')]",
+      "properties": {
+        "source": "user-override",
+        "value": "azure_ai,vector,age, pg_diskann"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/firewallRules', parameters('serverName'), 'AllowAll')]",
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/firewallRules', parameters('serverName'), 'AllowAllAzureServicesAndResourcesWithinAzureIps')]",
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/databases', parameters('serverName'), 'cases')]",
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('serverName'))]"
+      ],
+      "metadata": {
+        "description": "Configures the \"azure.extensions\" parameter to allowlist extensions."
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('azureOpenAIServiceName')]",
+      "location": "[parameters('location')]",
+      "kind": "OpenAI",
+      "sku": {
+        "name": "S0",
+        "tier": "Standard"
+      },
+      "properties": {
+        "customSubDomainName": "[parameters('azureOpenAIServiceName')]",
+        "publicNetworkAccess": "Enabled",
+        "restore": "[parameters('restore')]"
+      },
+      "metadata": {
+        "description": "Creates an Azure OpenAI service."
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', parameters('azureOpenAIServiceName'), 'text-embedding-3-small')]",
+      "sku": {
+        "name": "Standard",
+        "capacity": 350
+      },
+      "properties": {
+        "model": {
+          "name": "text-embedding-3-small",
+          "version": "1",
+          "format": "OpenAI"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('azureOpenAIServiceName'))]"
+      ],
+      "metadata": {
+        "description": "Creates an embedding deployment for the Azure OpenAI service."
+      }
+    }
+  ],
+  "outputs": {
+    "serverFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('serverName')), '2023-03-01-preview').fullyQualifiedDomainName]"
+    },
+    "serverName": {
+      "type": "string",
+      "value": "[parameters('serverName')]"
+    },
+    "databaseName": {
+      "type": "string",
+      "value": "cases"
+    },
+    "azureOpenAIServiceName": {
+      "type": "string",
+      "value": "[parameters('azureOpenAIServiceName')]"
+    },
+    "azureOpenAIEndpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('azureOpenAIServiceName')), '2023-05-01').endpoint]"
+    },
+    "azureOpenAIEmbeddingDeploymentName": {
+      "type": "string",
+      "value": "text-embedding-3-small"
+    }
+  }
+}
