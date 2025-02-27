@@ -11,7 +11,15 @@
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
+      "allowedValues": [
+        "australiaeast",
+        "canadaeast",
+        "eastus",
+        "eastus2",
+        "japaneast",
+        "switzerlandnorth",
+        "westus"
+      ],
       "metadata": {
         "description": "Location for all resources."
       }

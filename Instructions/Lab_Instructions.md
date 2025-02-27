@@ -1,14 +1,6 @@
-@lab.Title
-
-Login to your VM with the following credentials...
-
-**Username: ++@lab.VirtualMachine(Win11-Pro-Base-VM).Username++**
-
-**Password: +++@lab.VirtualMachine(Win11-Pro-Base-VM).Password+++**
-
 # Table of Contents
 
-1. [Part 0 - Log into Azure](#part-0---log-into-azure)
+1. [Part 0 - Deploy the resources on your Azure Subscription](#part-0---Deploy-the-resources)
 1. [Part 1 - Getting started with AI on Azure PostgreSQL flexible server](#part-1---getting-started-with-ai-on-azure-postgresql-flexible-server)
     1. [Clone TechConnect Lab repo](#clone-techconnect-lab-repo)
     1. [Connect to your database using psql in the Azure Cloud Shell](#connect-to-your-database-using-psql-in-the-azure-cloud-shell)
@@ -26,12 +18,13 @@ Login to your VM with the following credentials...
     1. [GraphRAG](#what-is-graphrag)
     1. [Compare Results of RAG responses using Vector search, Reranker or GraphRAG](#compare-results-of-rag-responses-using-vector-search-reranker-or-graphrag)
 
-# Part 0 - Log into Azure
-Open Edge in the lab environment and login to Azure Portal with the following credentials.
+# Part 0 - Deploy the resources
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FGlobalAICommunity%2Fglobal-ai-bootcamp-2025-workshop-genai-on-postgresql%2Frefs%2Fheads%2Fmain%2FSetup%2FInfra%2Fdeploy.json)
 
-1. Go to [Azure portal](https://portal.azure.com/) `https://portal.azure.com/`
-    - Username: +++@lab.CloudPortalCredential(User1).Username+++
-    - Password:+++@lab.CloudPortalCredential(User1).Password+++
+Note: Since we are using text-embedding-3-small model, pick one of the following regions for deployment: australiaeast,canadaeast,eastus,eastus2, japaneast,switserlandnorth, westus
+
+Keep in mind what resource group you created the resources, and note down the password that you filled.
+
 
 ===
 # Part 1 - Getting started with AI on Azure PostgreSQL flexible server
@@ -54,14 +47,14 @@ Open Edge in the lab environment and login to Azure Portal with the following cr
 
 3. At the Cloud Shell prompt, enter the following to clone the GitHub repo containing exercise resources:
 
-    > +++git clone https://github.com/Azure-Samples/mslearn-pg-ai.git+++
+    > git clone https://github.com/Azure-Samples/mslearn-pg-ai.git
 
 
 ## Connect to your database using psql in the Azure Cloud Shell
 
 In this task, you connect to the <code spellcheck="false">cases</code> database on your Azure Database for PostgreSQL flexible server using the [psql command-line utility](https://www.postgresql.org/docs/current/app-psql.html) from the [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview).
 
-1. In the [Azure portal](https://portal.azure.com/), navigate to **Resource Groups** and select the resource group with the name **ResourceGroup1**
+1. In the [Azure portal](https://portal.azure.com/), navigate to **Resource Groups** and select the resource group with the name **%YOUR RESOURCE GROUP%**
     ![Screenshot of the Azure Portal with Resource groups selected](./instructions276019/azure-portal.png)
     
 2. In that resource group select the precreated **Azure Database for PostgreSQL flexible server** instance.
@@ -76,12 +69,12 @@ In this task, you connect to the <code spellcheck="false">cases</code> database 
     > [!alert]
     **MAKE SURE YOU TYPE IN YOUR PASSWORD, COPY & PASTE MAY NOT WORK**
 
-    **Password:** +++passw0rd+++
+    **Password:** %YOUR PASSWORD HERE%
 
     Once logged in, the <code spellcheck="false">psql</code> prompt for the <code spellcheck="false">cases</code> database is displayed.
 
 5. Throughout the remainder of this exercise, you continue working in the Cloud Shell, so it may be helpful to expand the pane within your browser window by selecting the **Maximize** button at the top right of the pane.
-<br>
+
     ![Screenshot of the Azure Cloud Shell pane with the Maximize button highlighted by a red box.](./instructions276019/azure-cloud-shell-pane-maximize-new.png)
 
 ## Populate the database with sample data
@@ -111,7 +104,7 @@ Now you have explored the database in Azure and configured the Azure OpenAI endp
 
 Using pgAdmin makes it easier to explore the output and understand how the AI features work in PostgreSQL. 
 
-1. In a new tab, open the [Azure portal](https://portal.azure.com/), navigate to **Resource Groups** and select the resource group with the name **ResourceGroup1**
+1. In a new tab, open the [Azure portal](https://portal.azure.com/), navigate to **Resource Groups** and select the resource group with the name **%YOUR RESOURCE GROUP%**
     ![Screenshot of the Azure Portal with Resource groups selected](./instructions276019/azure-portal.png)
 
 1. In that resource group select the precreated **Azure Database for PostgreSQL flexible server** instance.
@@ -120,7 +113,7 @@ Using pgAdmin makes it easier to explore the output and understand how the AI fe
 1. In the resource menu of your Azure Database for PostgreSQL Flexible Server instance, under **Settings**, select **Connect** and follow instructions in Azure Portal on how to connect to pgAdmin.
 ![Connecting to pgAdmin from Azure](./instructions276019/pgAdmin-from-azure.png)
 
-    >[!tip] pgAdmin is already installed on your VM, you with find a *blue elephant icon* on your desktop.
+    >[!tip] You will need to install pgAdmin first. You can download it from [here](https://www.pgadmin.org/download/)
 
     1. **Open pgAdmin 4:** Launch the pgAdmin 4 application on your computer. *This should be on your desktop.*
 
@@ -130,7 +123,7 @@ Using pgAdmin makes it easier to explore the output and understand how the AI fe
         - **Hostname**: Find this in Azure Portal
         - **Maintenance database**: `cases`
         - **Username**: `pgAdmin`
-        - **Password**: `passw0rd`
+        - **Password**: `%YOUR PASSWORD HERE%`
         - **Port**: `5432`
 
     1. **Save the configuration:** Click the "Save" button to save the server registration. pgAdmin 4 will now establish a connection to your Azure Database for PostgreSQL Flexible Server.
