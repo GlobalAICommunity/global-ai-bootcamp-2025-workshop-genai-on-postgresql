@@ -6,24 +6,29 @@ This project demonstrates how to use AI-driven features on Azure PostgreSQL Flex
 
 1. [Part 0 - Log into Azure](#part-0---log-into-azure)
 1. [Part 1 - Getting started with AI on Azure PostgreSQL flexible server](#part-1---getting-started-with-ai-on-azure-postgresql-flexible-server)
-    1. [Clone Ignite Lab repo](#clone-ignite-lab-repo)
+    1. [Clone TechConnect Lab repo](#clone-techconnect-lab-repo)
     1. [Connect to your database using psql in the Azure Cloud Shell](#connect-to-your-database-using-psql-in-the-azure-cloud-shell)
     1. [Populate the database with sample data](#populate-the-database-with-sample-data)
     1. [Setting up pgAdmin](#setting-up-pgadmin)
     1. [Install and configure the `azure_ai` extension](#install-and-configure-the-azure_ai-extension)
 1. [Part 2 - Using AI-driven features in Postgres](#part-2---using-ai-driven-features-in-postgres)
     1. [Using Pattern matching for queries](#using-pattern-matching-for-queries)
-    1. [Using Full Text Search](#using-full-text-search)
     1. [Using Semantic Search and DiskANN](#using-semantic-search-and-diskann-index)
-    1. [Hybrid Query (Full-Text Search and Semantic Search)](#hybrid-query-full-text-search-and-semantic-search)
-1. [How RAG chatbot accuracy improves with different technique](#how-rag-chatbot-accuracy-improves-with-different-technique)
+1. [ Part 3 - How RAG chatbot accuracy improves with different technique](#part-3---how-rag-chatbot-accuracy-improves-with-different-technique)
     1. [Exploring Cases RAG application](#exploring-cases-rag-application)
-    1. [Compare Results of RAG responses using Vector search, Reranker or GraphRAG](#compare-results-of-rag-responses-using-vector-search-reranker-or-graphrag)
-1. [Optional - Improving RAG Accuracy with Advanced Techniques - Reranking and GraphRAG](#improving-rag-accuracy-with-advanced-techniques---reranking-and-graphrag)
+    1. [Review Accuracy of vector search queries](#review-accuracy-of-vector-search-queries)
+1. [Part 4 - Improving RAG Accuracy with Advanced Techniques - Reranking and GraphRAG](#part-4---improving-rag-accuracy-with-advanced-techniques---reranking-and-graphrag)
     1. [Reranker](#what-is-a-reranker)
     1. [GraphRAG](#what-is-graphrag)
-    1. [Compare Results](#compare-results)
-## Build Sample Application Locally
+    1. [Compare Results of RAG responses using Vector search, Reranker or GraphRAG](#compare-results-of-rag-responses-using-vector-search-reranker-or-graphrag)
+
+## Build GraphRAG Application on Azure
+
+This will require and Azure subscription, follow our [Graph RAG solution accelerator](https://aka.ms/graphrag-legal-solution-accelerator-pg-blog)
+
+![Graph RAG App](./Instructions/instructions282962/azure-RAG-app-demo.png)
+
+## Build Simple RAG Application Locally
 
 ### Setting up the environment file
 
@@ -54,5 +59,6 @@ streamlit run rag_chatbot_demo.py
 
 When run locally run looking for website at http://localhost:8501/
 
-![OpenAI credientials](./Instructions/instructions276019/azure-RAG-app.png)
+![Simple RAG App](./Instructions/instructions276019/azure-RAG-app.png)
+
 
